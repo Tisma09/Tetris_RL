@@ -1,0 +1,160 @@
+import pygame
+import numpy as np
+
+from config import *
+from tetromino import Tetromino
+
+
+class TetrisGame:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("Tetris")
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.SysFont('Arial', 24)
+        self.reset()
+    
+    def reset(self):
+        self.grid = np.zeros((GRID_HEIGHT, GRID_WIDTH), dtype=int)
+        self.current_piece = self.new_piece()
+        self.next_piece = Tetromino(0,0)
+        self.score = 0
+        self.level = 0
+        self.lines = 0
+        self.fall_speed = START_SPEED
+        self.last_fall = pygame.time.get_ticks()
+        self.running = True
+    
+    def new_piece(self):
+        return Tetromino(GRID_WIDTH//2 - 2, 0)
+    
+    def lock_piece(self):
+        for y, row in enumerate(self.current_piece.get_shape):
+            for x, cell in enumerate(row):
+                if cell:
+                    self.grid[self.current_piece.y + y][self.current_piece.x + x] = self.current_piece.color
+        self.clear_lines()
+        self.current_piece = self.next_piece
+        self.next_piece = Tetromino(0,0)
+        self.current_piece.x = GRID_WIDTH//2 - 2
+        self.current_piece.y = 0
+        if self.current_piece.collision(0, 0, self.grid):
+            self.running = False
+    
+    def clear_lines(self):
+        full_lines = []
+        for i, row in enumerate(self.grid):
+            if 0 not in row:
+                full_lines.append(i)
+        
+        for line in full_lines:
+            self.grid = np.delete(self.grid, line, 0)
+            self.grid = np.insert(self.grid, 0, 0, axis=0)
+        
+        if full_lines:
+            self.lines += len(full_lines)
+            self.score += 100 * (2 ** len(full_lines) - 1)
+            self.level = 0 + self.lines // 10
+            self.fall_speed = max(50, START_SPEED - 75 * self.level)
+
+
+
+    #############################
+    #           Ctrl            #
+    #############################
+    
+    def move(self, dx=0, dy=0):
+        if not self.current_piece.collision(dx, dy, self.grid):
+            self.current_piece.x += dx
+            self.current_piece.y += dy
+    
+    def hard_drop(self):
+        while not self.current_piece.collision(0, 1, self.grid):
+            self.current_piece.y += 1
+        self.lock_piece()
+
+    def rotate_piece(self):
+        self.current_piece.rotate(self.grid)
+
+
+
+
+    #############################
+    #       Fct in loop         #
+    #############################
+    
+    def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_fall > self.fall_speed:
+            if not self.current_piece.collision(0, 1, self.grid):
+                self.current_piece.y += 1
+                self.last_fall = now
+            else:
+                self.lock_piece()
+                self.last_fall = now
+    
+    def draw_grid(self):
+        for y in range(GRID_HEIGHT):
+            for x in range(GRID_WIDTH):
+                if self.grid[y][x]:
+                    pygame.draw.rect(self.screen, COLORS[self.grid[y][x]],
+                                   (x*BLOCK_SIZE, y*BLOCK_SIZE, BLOCK_SIZE-1, BLOCK_SIZE-1))
+    
+    def draw_piece(self, piece, offset_x=0, offset_y=0):
+        for y, row in enumerate(piece.get_shape):
+            for x, cell in enumerate(row):
+                if cell:
+                    pygame.draw.rect(self.screen, COLORS[piece.color],
+                                    ((piece.x + x + offset_x)*BLOCK_SIZE,
+                                     (piece.y + y + offset_y)*BLOCK_SIZE,
+                                     BLOCK_SIZE-1, BLOCK_SIZE-1))
+    
+    def draw_ui(self):
+        # Score
+        text = self.font.render(f'Score: {self.score}', True, (255,255,255))
+        self.screen.blit(text, (BLOCK_SIZE*GRID_WIDTH + 10, 20))
+        text = self.font.render(f'Lvl: {self.level}', True, (255,255,255))
+        self.screen.blit(text, (BLOCK_SIZE*GRID_WIDTH + 10, 60))
+        
+        # Prochaine pièce
+        text = self.font.render('Next:', True, (255,255,255))
+        self.screen.blit(text, (BLOCK_SIZE*GRID_WIDTH + 10, 100))
+        self.draw_piece(self.next_piece, GRID_WIDTH + 2, 5)
+
+        pygame.draw.line(self.screen, (255, 255, 255), (BLOCK_SIZE*GRID_WIDTH, 0), (BLOCK_SIZE*GRID_WIDTH, self.screen.get_height()), 2)
+    
+
+
+
+    #############################
+    #           Fct Run         #
+    #############################
+
+    def run(self):
+        while self.running:
+            self.clock.tick(FPS)
+            self.screen.fill((0,0,0))
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        self.move(-1)
+                    if event.key == pygame.K_RIGHT:
+                        self.move(1)
+                    if event.key == pygame.K_DOWN:
+                        self.move(0,1)
+                    if event.key == pygame.K_UP:
+                        self.rotate_piece()
+                    if event.key == pygame.K_SPACE:
+                        self.hard_drop()
+            
+            self.update()
+            self.draw_grid()
+            self.draw_piece(self.current_piece)
+            self.draw_ui()
+            pygame.display.update()
+        
+        pygame.quit()
