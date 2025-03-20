@@ -212,7 +212,7 @@ class TetrisGame:
     def maximiser_lignes_vides(self):
         empty_lines = 0
         for row in self.grid: # Parcours les lignes
-            if 1 not in row: # Si aucune case pleine
+            if all(x == 0 for x in row): # Si aucune case pleine
                 empty_lines += 1 # Alors incrément du nombre de lignes vides
         #if empty_lines > self.empty_lines: # Si nbr de ligne vide supérieur au nbr de lignes vides avant la pièce alors pénalité
         self.reward += 10 * (empty_lines - self.empty_lines) # Valeur arbitraire
@@ -221,22 +221,29 @@ class TetrisGame:
     
     def minimiser_trous(self):
         holes = 0
+        grid = np.zeros((20, 10), dtype=int)
         for i, row in enumerate(self.grid): # Parcours les lignes
-            for j in row: # Parcours les colonnes de la ligne i
-                if not j: # Si case vide
+            for j, valeur in enumerate(row): # Parcours les colonnes de la ligne i
+                if not valeur: # Si case vide
                     for k in range(i-1, -1, -1): # Parcours les cases supérieur de la colonne j depuis la ligne i
-                        if self.grid[k][j] == 1: # Si case pleine
+                        if self.grid[k][j] != 0: # Si case pleine
                             holes += 1 # Alors incrément nbr trous
+                            grid[i][j] = 1
                             break
         #if holes > self.holes:
-        self.reward -= 30 * (holes - self.holes) # Valeur arbitraire
+        self.reward -= 25 * (holes - self.holes) # Valeur arbitraire
         self.holes = holes
+
+        print(grid)
 
     def afficher_stats(self):
         print("Lignes vides : ", self.empty_lines)
         print("Trous : ", self.holes)
         print("Récompenses : ", self.reward)
 
+        #print(self.grid)
+
+        print("-"*20)
         
     #############################
     #           Fct Step        #
