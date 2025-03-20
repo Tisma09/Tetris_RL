@@ -8,7 +8,7 @@ class GradientLearningAgent:
         self.state_size = state_size
         self.action_size = action_size
         self.learning_rate = learning_rate
-        self.gamma = gamma  # Discount factor
+        self.gamma = gamma
         
         self.model = self.build_model()
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)

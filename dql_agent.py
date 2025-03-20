@@ -33,12 +33,13 @@ class DQLAgent:
         return model
 
     def act(self, state):
-        # Exploration vs exploitation
+        # Exploration
         if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)  # Exploration
+            return random.randrange(self.action_size)
+        # Exploitation
         state = state.clone().detach().float().unsqueeze(0) 
         q_values = self.model(state)
-        return torch.argmax(q_values).item()  # Exploitation
+        return torch.argmax(q_values).item()  
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))

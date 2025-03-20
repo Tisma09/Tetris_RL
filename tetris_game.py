@@ -7,6 +7,12 @@ from tetromino import Tetromino
 
 
 class TetrisGame:
+
+
+    #############################
+    #           Init            #
+    #############################
+
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -25,42 +31,11 @@ class TetrisGame:
         self.fall_speed = START_SPEED
         self.last_fall = pygame.time.get_ticks()
         self.running = True
+        self.full_lines = []
         self.reward = 0
 
         return self.state_data(True)
     
-    def lock_piece(self):
-        for y, row in enumerate(self.current_piece.get_shape):
-            for x, cell in enumerate(row):
-                if cell:
-                    self.grid[self.current_piece.y + y][self.current_piece.x + x] = self.current_piece.color
-        self.clear_lines()
-        self.current_piece = self.next_piece
-        self.next_piece = Tetromino(0,0)
-        self.current_piece.x = GRID_WIDTH//2 - 2
-        self.current_piece.y = 0
-        if self.current_piece.collision(0, 0, self.grid):
-            self.running = False
-    
-    def clear_lines(self):
-        full_lines = []
-        for i, row in enumerate(self.grid):
-            if 0 not in row:
-                full_lines.append(i)
-        
-        for line in full_lines:
-            self.grid = np.delete(self.grid, line, 0)
-            self.grid = np.insert(self.grid, 0, 0, axis=0)
-        
-        if full_lines:
-            self.lines += len(full_lines)
-            self.score += 100 * (2 ** len(full_lines) - 1)
-            self.level = 0 + self.lines // 10
-            self.fall_speed = max(50, START_SPEED - 75 * self.level)
-            self.reward += 100 * (2 ** len(full_lines) - 1)
-        else :
-            self.reward -= 0.5
-
 
 
     #############################
@@ -84,21 +59,51 @@ class TetrisGame:
 
 
 
+    #############################
+    #           Update          #
+    #############################
 
-    #############################
-    #       Fct in loop         #
-    #############################
+    def update(self, now):
+        if not self.current_piece.collision(0, 1, self.grid):
+            self.current_piece.y += 1
+            self.last_fall = now
+        else:
+            self.lock_piece()
+            self.last_fall = now
     
-    def update(self):
-        now = pygame.time.get_ticks()
-        if now - self.last_fall > self.fall_speed:
-            if not self.current_piece.collision(0, 1, self.grid):
-                self.current_piece.y += 1
-                self.last_fall = now
-            else:
-                self.lock_piece()
-                self.last_fall = now
+    def lock_piece(self):
+        for y, row in enumerate(self.current_piece.get_shape):
+            for x, cell in enumerate(row):
+                if cell:
+                    self.grid[self.current_piece.y + y][self.current_piece.x + x] = self.current_piece.color
+        self.clear_lines()
+        self.current_piece = self.next_piece
+        self.next_piece = Tetromino(0,0)
+        self.current_piece.x = GRID_WIDTH//2 - 2
+        self.current_piece.y = 0
+        if self.current_piece.collision(0, 0, self.grid):
+            self.running = False
     
+    def clear_lines(self):
+        self.full_lines = []
+        for i, row in enumerate(self.grid):
+            if 0 not in row:
+                self.full_lines.append(i)
+        
+        for line in self.full_lines:
+            self.grid = np.delete(self.grid, line, 0)
+            self.grid = np.insert(self.grid, 0, 0, axis=0)
+        
+        if self.full_lines:
+            self.lines += len(self.full_lines)
+            self.score += 100 * (2 ** len(self.full_lines) - 1)
+            self.level = 0 + self.lines // 10
+            self.fall_speed = max(50, START_SPEED - 75 * self.level)
+
+    #######################################################################################
+    ###############                            Fct UI                      ################
+    #######################################################################################
+
     def draw_grid(self):
         for y in range(GRID_HEIGHT):
             for x in range(GRID_WIDTH):
@@ -132,9 +137,14 @@ class TetrisGame:
 
 
 
-    #############################
-    #           Fct Run         #
-    #############################
+
+
+
+
+
+    #######################################################################################
+    ###############               Fct pour jeux classique                  ################
+    #######################################################################################
 
     def run(self):
         while self.running:
@@ -157,7 +167,9 @@ class TetrisGame:
                     if event.key == pygame.K_SPACE:
                         self.hard_drop()
             
-            self.update()
+            now = pygame.time.get_ticks()
+            if now - self.last_fall > self.fall_speed:
+                self.update(now)
             self.draw_grid()
             self.draw_piece(self.current_piece)
             self.draw_ui()
@@ -166,6 +178,30 @@ class TetrisGame:
         pygame.quit()
 
 
+
+
+
+
+
+
+
+
+    #######################################################################################
+    ###############                Fct d'etat pour IA                      ################
+    #######################################################################################
+
+    #############################
+    #        Fct Reward         #
+    #############################
+
+    def update_reward(self):
+        if self.full_lines:
+            self.reward += 100 * (2 ** len(self.full_lines) - 1)
+        else :
+            self.reward -= 0.5
+
+
+        
     #############################
     #           Fct Step        #
     #############################
@@ -186,7 +222,10 @@ class TetrisGame:
         #if action == 4:
             #self.hard_drop()
     
-        self.update()
+        now = pygame.time.get_ticks()
+        if now - self.last_fall > self.fall_speed:
+            self.update(now)
+            self.update_reward()
         self.draw_grid()
         self.draw_piece(self.current_piece)
         self.draw_ui()
@@ -221,3 +260,8 @@ class TetrisGame:
         state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor, next_tetromino_tensor])
 
         return state_tensor, self.reward, not self.running
+    
+
+
+
+
