@@ -13,12 +13,13 @@ class TetrisGame:
     #           Init            #
     #############################
 
-    def __init__(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.display.set_caption("Tetris")
+    def __init__(self, ui=True):
+        if ui :
+            pygame.init()
+            self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+            pygame.display.set_caption("Tetris")
+            self.font = pygame.font.SysFont('Arial', 24)
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont('Arial', 24)
         self.reset()
     
     def reset(self):
@@ -34,7 +35,7 @@ class TetrisGame:
         self.full_lines = []
         self.reward = 0
 
-        return self.state_data(True)
+        return self.state_data()
     
 
 
@@ -206,10 +207,11 @@ class TetrisGame:
     #           Fct Step        #
     #############################
 
-    def step(self, action):
+    def step(self, action, ui=False):
         self.reward = 0
         self.clock.tick(FPS)
-        self.screen.fill((0,0,0))
+        if ui :
+            self.screen.fill((0,0,0))
 
         if action == 0:
             self.move(-1)
@@ -226,10 +228,11 @@ class TetrisGame:
         if now - self.last_fall > self.fall_speed:
             self.update(now)
             self.update_reward()
-        self.draw_grid()
-        self.draw_piece(self.current_piece)
-        self.draw_ui()
-        pygame.display.update()
+        if ui :
+            self.draw_grid()
+            self.draw_piece(self.current_piece)
+            self.draw_ui()
+            pygame.display.update()
 
         return self.state_data()
 
@@ -239,7 +242,7 @@ class TetrisGame:
     #         State Data        #
     #############################
 
-    def state_data(self, debug=False):
+    def state_data(self):
         shape_data_np = np.array(self.current_piece.shape_data)  # Convertit en numpy array
         h, w = shape_data_np.shape # Récupère la taille actuelle
         normalized_shape_data = np.zeros((4, 4), dtype=np.float32)
