@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+import torch
 
 from config import *
 from tetromino import Tetromino
@@ -16,7 +17,7 @@ class TetrisGame:
     
     def reset(self):
         self.grid = np.zeros((GRID_HEIGHT, GRID_WIDTH), dtype=int)
-        self.current_piece = self.new_piece()
+        self.current_piece = Tetromino(GRID_WIDTH//2 - 2,0)
         self.next_piece = Tetromino(0,0)
         self.score = 0
         self.level = 0
@@ -24,9 +25,9 @@ class TetrisGame:
         self.fall_speed = START_SPEED
         self.last_fall = pygame.time.get_ticks()
         self.running = True
-    
-    def new_piece(self):
-        return Tetromino(GRID_WIDTH//2 - 2, 0)
+        self.reward = 0
+
+        return self.state_data(True)
     
     def lock_piece(self):
         for y, row in enumerate(self.current_piece.get_shape):
@@ -56,6 +57,9 @@ class TetrisGame:
             self.score += 100 * (2 ** len(full_lines) - 1)
             self.level = 0 + self.lines // 10
             self.fall_speed = max(50, START_SPEED - 75 * self.level)
+            self.reward += 100 * (2 ** len(full_lines) - 1)
+        else :
+            self.reward -= 0.5
 
 
 
@@ -71,7 +75,9 @@ class TetrisGame:
     def hard_drop(self):
         while not self.current_piece.collision(0, 1, self.grid):
             self.current_piece.y += 1
+        now = pygame.time.get_ticks()
         self.lock_piece()
+        self.last_fall = now
 
     def rotate_piece(self):
         self.current_piece.rotate(self.grid)
@@ -158,3 +164,60 @@ class TetrisGame:
             pygame.display.update()
         
         pygame.quit()
+
+
+    #############################
+    #           Fct Step        #
+    #############################
+
+    def step(self, action):
+        self.reward = 0
+        self.clock.tick(FPS)
+        self.screen.fill((0,0,0))
+
+        if action == 0:
+            self.move(-1)
+        if action == 1:
+            self.move(1)
+        if action == 2:
+            self.move(0,1)
+        if action == 3:
+            self.rotate_piece()
+        #if action == 4:
+            #self.hard_drop()
+    
+        self.update()
+        self.draw_grid()
+        self.draw_piece(self.current_piece)
+        self.draw_ui()
+        pygame.display.update()
+
+        return self.state_data()
+
+
+
+    #############################
+    #         State Data        #
+    #############################
+
+    def state_data(self, debug=False):
+        shape_data_np = np.array(self.current_piece.shape_data)  # Convertit en numpy array
+        h, w = shape_data_np.shape # Récupère la taille actuelle
+        normalized_shape_data = np.zeros((4, 4), dtype=np.float32)
+        normalized_shape_data[:h, :w] = shape_data_np
+
+        shape_data_np = np.array(self.next_piece.shape_data)  # Convertit en numpy array
+        h, w = shape_data_np.shape  # Récupère la taille actuelle
+        normalized_next_shape_data = np.zeros((4, 4), dtype=np.float32)
+        normalized_next_shape_data[:h, :w] = shape_data_np
+
+
+        grid_tensor = torch.tensor(self.grid, dtype=torch.float32).flatten()  # (200,)
+        tetromino_tensor = torch.tensor(normalized_shape_data, dtype=torch.float32).flatten()  # (16,)
+        position_tensor = torch.tensor([self.current_piece.x, self.current_piece.y], dtype=torch.float32)  # (2,)
+        next_tetromino_tensor = torch.tensor(normalized_next_shape_data, dtype=torch.float32).flatten()  # (16,)
+
+        # Concaténation de toutes les entrées
+        state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor, next_tetromino_tensor])
+
+        return state_tensor, self.reward, not self.running
