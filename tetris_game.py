@@ -270,7 +270,7 @@ class TetrisGame:
             self.draw_ui()
             pygame.display.update()
 
-        return self.state_data()
+        return self.state_data(), self.reward, not self.running
 
 
 
@@ -298,7 +298,7 @@ class TetrisGame:
         # Concaténation de toutes les entrées
         state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor, next_tetromino_tensor])
 
-        return state_tensor, self.reward, not self.running
+        return state_tensor
     
 
 

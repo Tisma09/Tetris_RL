@@ -1,74 +1,60 @@
-"""
-from tetris_game import TetrisGame
-from train import train
-from dql_agent import DQLAgent
-import os
-
-if __name__ == "__main__":
-    game = TetrisGame(ui=True)
-    #game.run()
-
-    filepath = "policy/dql_agent.pth"
-
-    if os.path.exists(filepath):
-        print("Entrainement déjà existant, chargement du fichier")
-        agent = DQLAgent(234, 5, filename=filepath)
-    else:
-        print("Aucun entrainement exisant, création d'un nouveau fichier")
-        agent = DQLAgent(234, 5)
-    train(agent, game, num_episodes=10  , ui=True)
-
-"""
 import torch.multiprocessing as mp
 from tetris_game import TetrisGame
-from train import train
+from train import train, play_ia, check_for_replay
 from dql_agent import DQLAgent
-import torch
 import os
 
-def run_simulation(sim_id, shared_agent, filepath, lock):
+def run_simulation(agent, num_episodes, lock):
     """ Fonction exécutée par chaque processus pour jouer et entraîner l'agent """
-    print(f"Lancement de la simulation {sim_id}...")
+    game = TetrisGame(ui=False)
+    train(agent, game, num_episodes=num_episodes, ui=False, lock=lock)
 
-    game = TetrisGame(ui=False)  # Désactiver l'UI pour les simulations parallèles
-    agent = DQLAgent(234, 5)  # Créer un agent local
+if __name__ == "__main__": 
+    req_train = input("Do you want to start the training? (y/n)")
+    if req_train == "y":
+        num_simulations = input("How many simulations?")
+        num_episodes = input("How many episodes per simulation?")
+        num_simulations = int(num_simulations)
+        num_episodes = int(num_episodes)
+        num_batches = 1
+        freq = 3
 
-    # Charger le modèle partagé
-    agent.policy.load_state_dict(shared_agent.state_dict())
+        mp.set_start_method("spawn", force=True)  # Forcer le démarrage avec 'spawn' pour Windows
+        filepath = "policy/dql_agent.pth"
+        if os.path.exists(filepath):
+            print("Entrainement existant, chargement du fichier...")
+            agent = DQLAgent(234, 5, filename=filepath, loading=True)
+        else:
+            print("Aucun entrainement existant, création d'un nouvel agent...")
+            agent = DQLAgent(234, 5, filename=filepath, loading=False)
 
-    # Entraînement
-    train(agent, game, num_episodes=5, ui=False)
+        manager = mp.Manager()
+        shared_agent = manager.Namespace()
+        shared_agent.agent = agent  # Partage de l'agent
+        # Entrainement en parallèle
+        lock = mp.Lock()
+        processes = []
+        for _ in range(num_simulations):
+            # Corrected argument order: lock is passed before num_simulations
+            p = mp.Process(target=run_simulation, args=(shared_agent.agent, num_episodes, lock))
+            processes.append(p)
+            p.start()
 
-    #lock
+        if isinstance(agent, DQLAgent) :
+            replay_process = mp.Process(target=check_for_replay, args=(shared_agent.agent, lock, num_batches, freq))
+            replay_process.start()
 
-    print(f"Simulation {sim_id} terminée.")
+        for p in processes:
+            p.join()
 
-if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)  # Forcer le démarrage avec 'spawn' pour Windows
-    num_simulations = 5  # Nombre de parties en parallèle
+        if isinstance(agent, DQLAgent) :
+            shared_agent.agent.stop = True
+            replay_process.join()
 
-    filepath = "policy/dql_agent.pth"
-    if os.path.exists(filepath):
-        print("Entrainement existant, chargement du fichier...")
-        agent = DQLAgent(234, 5, filename=filepath)
+        agent.save_policy()
+        print("Toutes les simulations sont terminées.")
     else:
-        print("Aucun entrainement existant, création d'un nouvel agent...")
+        game = TetrisGame(ui=True)
         agent = DQLAgent(234, 5)
-
-    # Partager le modèle entre les processus
-    agent.policy.share_memory()
-
-    # Création d'un verrou pour la mise à jour du fichier
-    lock = mp.Lock()
-
-    # Lancer plusieurs simulations en parallèle
-    processes = []
-    for i in range(num_simulations):
-        p = mp.Process(target=run_simulation, args=(i, agent.policy, filepath, lock))
-        p.start()
-        processes.append(p)
-
-    for p in processes:
-        p.join()  # Attendre la fin de toutes les simulations
-
-    print("Toutes les simulations sont terminées.")
+        play_ia(agent, game)
+        print("End of the game")
