@@ -198,6 +198,8 @@ class TetrisGame:
     #############################
 
     def update_reward(self):
+        self.reward += self.score * 0.1
+
         self.remplir_lignes()
         self.maximiser_lignes_vides()
         self.minimiser_trous()
