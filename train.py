@@ -2,8 +2,9 @@ import pygame
 from dql_agent import DQLAgent
 from config import *
 import torch.multiprocessing as mp
+import csv
 
-def train(agent, game_env, num_episodes=1000, ui=False):
+def train(agent, game_env, num_episodes=1000, ui=False, log_file=None):
     """
     Entraîne un agent (DQL ou Gradient Learning) dans l'environnement Tetris.
 
@@ -11,16 +12,16 @@ def train(agent, game_env, num_episodes=1000, ui=False):
     game_env: L'environnement de jeu Tetris
     num_episodes: Nombre d'épisodes d'entraînement
     ui: Avec ou sans interface
+    log_file: Fichier CSV où enregistrer les scores finaux
     """
 
     lock = mp.Lock()
     for episode in range(num_episodes):
-        # Réinitialisation jeu
-        state, reward, done = game_env.reset()  
+        # Réinitialisation du jeu
+        state, reward, done = game_env.reset()
         done = False
         total_reward = 0
         pause = False
-
 
         while not done:
             if ui:  # Vérifie si l'UI est activée avant de traiter les événements Pygame
@@ -28,22 +29,22 @@ def train(agent, game_env, num_episodes=1000, ui=False):
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_SPACE:
                             pause = not pause
-            
+
             if pause:
                 continue  # Si le jeu est en pause, on passe à l'itération suivante
 
             # Choix action
             action = agent.act(state)
-            
+
             # Exécution de l'action
-            next_state, reward, done = game_env.step(action, ui=ui)  
-            
+            next_state, reward, done = game_env.step(action, ui=ui)
+
             # Pour DQL : Stocke l'expérience, pour Gradient Learning : Entraîne directement
             if isinstance(agent, DQLAgent):
                 agent.remember(state, action, reward, next_state, done)
             else:
                 agent.train(state, action, reward, next_state, done)
-            
+
             state = next_state
             total_reward += reward
 
@@ -52,6 +53,12 @@ def train(agent, game_env, num_episodes=1000, ui=False):
             agent.replay()
 
         print(f"Episode {episode+1}/{num_episodes} - Score: {total_reward}")
+
+        # Enregistrer le score final de l'épisode dans le fichier CSV si un fichier est spécifié
+        if log_file:
+            with open(log_file, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([episode + 1, total_reward])  # Enregistrer le score final de l'épisode
 
         # Verrouillage pour mettre à jour le modèle global
         with lock:
@@ -62,3 +69,4 @@ def train(agent, game_env, num_episodes=1000, ui=False):
             print("save ok")
             
         pygame.quit()
+

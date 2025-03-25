@@ -102,7 +102,7 @@ class DQLAgent:
             'epsilon': self.epsilon                                 # Sauvegarde du taux d'exploration
         }
         torch.save(checkpoint, filename)
-        print(f"Politique sauvegardé sous '{filename}'")
+        #print(f"Politique sauvegardé sous '{filename}'")
 
     def load_policy(self, filename="policy/dql_agent.pth"):
         try:
@@ -110,7 +110,7 @@ class DQLAgent:
             self.policy.load_state_dict(checkpoint['policy_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.epsilon = checkpoint.get('epsilon', 1.0)
-            print(f"Politique chargée depuis '{filename}'")
+            #print(f"Politique chargée depuis '{filename}'")
         except FileNotFoundError:
             print(f"Erreur : fichier '{filename}' introuvable.")
         except Exception as e:
