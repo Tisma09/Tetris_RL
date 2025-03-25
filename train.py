@@ -1,11 +1,7 @@
 import pygame
-
-import torch
-
 from dql_agent import DQLAgent
 from config import *
-
-
+import torch.multiprocessing as mp
 
 def train(agent, game_env, num_episodes=1000, ui=False):
     """
@@ -17,6 +13,7 @@ def train(agent, game_env, num_episodes=1000, ui=False):
     ui: Avec ou sans interface
     """
 
+    lock = mp.Lock()
     for episode in range(num_episodes):
         # Réinitialisation jeu
         state, reward, done = game_env.reset()  
@@ -24,18 +21,21 @@ def train(agent, game_env, num_episodes=1000, ui=False):
         total_reward = 0
         pause = False
 
+
         while not done:
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        pause = not pause
+            if ui:  # Vérifie si l'UI est activée avant de traiter les événements Pygame
+                for event in pygame.event.get():
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_SPACE:
+                            pause = not pause
             
-            if pause :
-                continue
+            if pause:
+                continue  # Si le jeu est en pause, on passe à l'itération suivante
+
             # Choix action
             action = agent.act(state)
             
-            # Execute 
+            # Exécution de l'action
             next_state, reward, done = game_env.step(action, ui=ui)  
             
             # Pour DQL : Stocke l'expérience, pour Gradient Learning : Entraîne directement
@@ -53,7 +53,12 @@ def train(agent, game_env, num_episodes=1000, ui=False):
 
         print(f"Episode {episode+1}/{num_episodes} - Score: {total_reward}")
 
-    agent.save_policy()
-    if ui :
-        pygame.quit()
+        # Verrouillage pour mettre à jour le modèle global
+        with lock:
+            agent.load_policy()
 
+            # Sauvegarde du modèle mis à jour
+            agent.save_policy()
+            print("save ok")
+            
+        pygame.quit()

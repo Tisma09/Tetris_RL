@@ -201,47 +201,39 @@ class TetrisGame:
         self.remplir_lignes()
         self.maximiser_lignes_vides()
         self.minimiser_trous()
-        self.afficher_stats()
+        #self.afficher_stats()
 
     def remplir_lignes(self):
         if self.full_lines:
             self.reward += 100 * (2 ** len(self.full_lines) - 1)
-        else :
-            self.reward -= 5
 
     def maximiser_lignes_vides(self):
         empty_lines = 0
         for row in self.grid: # Parcours les lignes
             if all(x == 0 for x in row): # Si aucune case pleine
                 empty_lines += 1 # Alors incrément du nombre de lignes vides
-        #if empty_lines > self.empty_lines: # Si nbr de ligne vide supérieur au nbr de lignes vides avant la pièce alors pénalité
         self.reward += 10 * (empty_lines - self.empty_lines) # Valeur arbitraire
         self.empty_lines = empty_lines # Save du nombre de ligne vides actuelles
 
     
     def minimiser_trous(self):
         holes = 0
-        grid = np.zeros((20, 10), dtype=int)
         for i, row in enumerate(self.grid): # Parcours les lignes
             for j, valeur in enumerate(row): # Parcours les colonnes de la ligne i
                 if not valeur: # Si case vide
                     for k in range(i-1, -1, -1): # Parcours les cases supérieur de la colonne j depuis la ligne i
                         if self.grid[k][j] != 0: # Si case pleine
                             holes += 1 # Alors incrément nbr trous
-                            grid[i][j] = 1
                             break
-        #if holes > self.holes:
+
         self.reward -= 25 * (holes - self.holes) # Valeur arbitraire
         self.holes = holes
 
-        print(grid)
 
     def afficher_stats(self):
         print("Lignes vides : ", self.empty_lines)
         print("Trous : ", self.holes)
         print("Récompenses : ", self.reward)
-
-        #print(self.grid)
 
         print("-"*20)
         
