@@ -62,3 +62,41 @@ def train(agent, game_env, num_episodes=1000, ui=False):
             print("save ok")
             
         pygame.quit()
+
+
+
+def play_ia(agent, game_env):
+    """
+    Montre l'IA jouer.
+
+    agent: L'agent
+    game_env: L'environnement de jeu Tetris
+    """
+    # Réinitialisation jeu
+    state, reward, done = game_env.reset()  
+    done = False
+    total_reward = 0
+    pause = False
+
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    pause = not pause
+        
+        if pause :
+            continue
+        
+        # Choix action
+        action = agent.act(state)
+        
+        # Execute 
+        next_state, reward, done = game_env.step(action, ui=True)  
+        
+        state = next_state
+        total_reward += reward
+
+
+    print(f"Score: {total_reward}")
+    pygame.quit()
+
