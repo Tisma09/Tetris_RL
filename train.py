@@ -13,36 +13,23 @@ def train(agent, game_env, num_episodes=1, ui=False, lock=None):
     lock: Verrou pour synchroniser l'accès aux ressources partagées
     """
     for episode in range(num_episodes):
-        # Réinitialisation jeu
         state = game_env.reset()
         done = False
         total_reward = 0
 
         while not done:
-            # Choix action
             action = agent.act(state)
-
-            # Exécution de l'action
             next_state, reward, done = game_env.step(action, ui=ui)
 
-            # Pour DQL : Stocke l'expérience, pour Gradient Learning : Entraîne directement
             if isinstance(agent, DQLAgent):
-                if lock:
-                    lock.acquire()
-                try:
-                    agent.remember(state, action, reward, next_state, done)
-                finally:
-                    if lock:
-                        lock.release()
+                agent.remember(state, action, reward, next_state, done)
             else:
                 agent.train(state, action, reward, next_state, done)
 
             state = next_state
             total_reward += reward
 
-
         print(f"Episode {episode+1}/{num_episodes} - Score: {total_reward}")
-        print(f"Remember since last replay : {agent.remember_call}")
         
 def check_for_replay(agent, lock, num_batches, freq=3):
     """
@@ -70,7 +57,7 @@ def play_ia(agent, game_env):
     game_env: L'environnement de jeu Tetris
     """
     # Réinitialisation jeu
-    state, reward, done = game_env.reset()  
+    state = game_env.reset()  
     done = False
     total_reward = 0
     pause = False
