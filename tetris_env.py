@@ -12,7 +12,12 @@ class TetrisEnv(gym.Env):
         self.observation_space = spaces.Box(low=0, high=1, shape=(234,), dtype=np.float32)
 
     def step(self, action):
-        state, reward, done = self.game.step(action)
+        if self.game.running:
+            state, reward, done = self.game.step(action)
+        else:
+            state = self.game.state_data()
+            reward = 0
+            done = True
         return state, reward, done, {}
 
     def reset(self):

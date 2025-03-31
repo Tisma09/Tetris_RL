@@ -70,7 +70,7 @@ class DQLAgent:
         num_batches: Number of batches to process in one replay step.
         """
         if len(self.memory) < self.memory.maxlen:
-            print("Number of experiences too weak")
+            #print("Number of experiences too weak")
             return
 
         for _ in range(num_batches):
