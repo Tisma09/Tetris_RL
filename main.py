@@ -3,6 +3,7 @@ from tetris_game import TetrisGame
 from train import train, play_ia
 from dql_agent import DQLAgent
 import os
+from plot_scores import creation_repertoire_logs, creation_fichier_scores, plot_scores
 
 if __name__ == "__main__": 
     req_train = input("Do you want to start the training? (y/n)")
@@ -11,6 +12,8 @@ if __name__ == "__main__":
         num_episodes = int(input("How many episodes per simulation?"))
         num_batches = 1
         freq = 3
+
+        folderpath = creation_repertoire_logs('logs', num_simulations, num_episodes)
 
         filepath = "policy/dql_agent.pth"
         if os.path.exists(filepath):
@@ -22,9 +25,16 @@ if __name__ == "__main__":
 
         ##########################
         ##### Entraînement #######
+        
+        #sim_id = defini dans la boucle for # Numéro de la simulation
+        # Exécuter cette fonction avant de lancer l'entrainement de la simualtion
+        #creation_fichier_scores(folderpath, sim_id)
+            
         ##########################
 
         print("Toutes les simulations sont terminées.")
+
+        plot_scores(folderpath)
     else:
         game = TetrisGame(ui=True)
         agent = DQLAgent(234, 5)
