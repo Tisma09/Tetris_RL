@@ -73,28 +73,6 @@ if __name__ == "__main__":
 
         plot_scores_list(rewards_history)
 
-        """     reward_history = np.array(rewards_history)
-        num_cpu, num_episodes = reward_history.shape
-        colors = plt.cm.rainbow(np.linspace(0, 1, num_cpu))
-        plt.figure(figsize=(12, 6))
-
-        # Tracer les récompenses pour chaque CPU
-        for i in range(num_cpu):
-            plt.plot(np.arange(1, num_episodes + 1), reward_history[i, :], 
-                    label=f'CPU {i}', color=colors[i], alpha=0.7)
-
-        # Labels et titre
-        plt.xlabel("Numéro d'épisode")
-        plt.ylabel("Récompense")
-        plt.title("Historique des récompenses par CPU")
-        plt.legend(loc="upper left", bbox_to_anchor=(1, 1), fontsize=8, ncol=2)
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()"""
-
-                
-        ##########################
-
     else:
         game = TetrisGame(ui=True)
         agent = DQLAgent(234, 5)
