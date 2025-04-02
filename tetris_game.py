@@ -101,7 +101,7 @@ class TetrisGame:
             self.lines += len(self.full_lines)
             self.score += 100 * (2 ** len(self.full_lines) - 1)
             self.level = 0 + self.lines // 10
-            self.fall_speed = max(50, START_SPEED - 75 * self.level)
+            #self.fall_speed = max(50, START_SPEED - 75 * self.level)
 
     #######################################################################################
     ###############                            Fct UI                      ################

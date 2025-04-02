@@ -1,6 +1,6 @@
-gym==0.26.2
-matplotlib==3.8.3
-numpy==2.2.4
-pygame==2.6.1
-stable_baselines3==2.5.0
-torch==2.6.0
+gym
+matplotlib
+numpy
+pygame
+stable_baselines3
+torch

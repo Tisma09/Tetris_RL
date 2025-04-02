@@ -56,7 +56,7 @@ def read_scores_from_file(filename):
                     print(f"Erreur de conversion pour la ligne '{row}': {e}")
     return episodes, scores
 
-def plot_scores(folderpath):
+def plot_scores_csv(folderpath):
     """Générer un graphique des scores combinés de toutes les simulations"""
     all_episodes = []
     all_scores = []
@@ -103,6 +103,39 @@ def plot_scores(folderpath):
     #plt.ylim(-2500, 1000)  # Cadre des y entre -2500 et 1000
     plt.show()
 
+def plot_scores_list(matrix_reward):
+    # Obtenir le nombre de simulations et d'épisodes
+    num_simulations, num_episodes = matrix_reward.shape
+
+    # Créer une liste d'épisodes (répéter les indices d'épisodes pour chaque simulation)
+    all_episodes = np.tile(np.arange(num_episodes), num_simulations)
+
+    # Applatir la matrice de scores pour obtenir tous les scores
+    all_scores = matrix_reward.flatten()
+
+    # Tracer les croix (points) pour tous les épisodes combinés
+    plt.scatter(all_episodes, all_scores, marker='x', s=50, alpha=0.7, label="Scores combinés")
+
+    # Ajouter une courbe de tendance globale (régression linéaire)
+    episodes_array = np.array(all_episodes)
+    scores_array = np.array(all_scores)
+
+    # Calcul de la régression linéaire (ajustement de polynôme de degré 1)
+    coefficients = np.polyfit(episodes_array, scores_array, 1)
+    polynomial = np.poly1d(coefficients)
+
+    # Tracer la courbe de tendance
+    trendline = polynomial(episodes_array)
+    plt.plot(episodes_array, trendline, color='red', label="Courbe de tendance", linestyle='--')
+
+    # Ajouter des détails au graphique
+    plt.xlabel("Numéro d'épisode")
+    plt.ylabel("Score")
+    plt.title("Scores combinés de toutes les simulations avec courbe de tendance")
+    plt.legend()
+    plt.grid(True)  # Ajouter la grille
+    plt.show
+
 def dernier_dossier_cree(parent_folder='logs'):
     """Trouver le dernier dossier créé dans le répertoire parent."""
     """Utiliser uniquement pour l'éxécution de ce fichier isolé."""
@@ -128,4 +161,4 @@ if __name__ == "__main__":
     folderpath = dernier_dossier_cree()  # Récupérer le dernier dossier créé
     if folderpath:
         # Exécuter plot_scores en passant le folderpath pour accéder aux fichiers dans le dossier spécifique
-        plot_scores(folderpath)
+        plot_scores_csv(folderpath)

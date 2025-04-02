@@ -1,13 +1,11 @@
 from stable_baselines3.common.vec_env import SubprocVecEnv
 import os
-import numpy as np
-import matplotlib as plt
 
 from tetris_game import TetrisGame
 from tetris_env import TetrisEnv
 from dql_agent import DQLAgent
 from train import train, train_multiprocess, play_ia
-from plot_scores import creation_repertoire_logs, creation_fichier_scores, plot_scores
+from plot_scores import plot_scores_list
 
 
 def make_env(rank):
@@ -23,8 +21,6 @@ if __name__ == "__main__":
         ##########################
         #####     Agent    #######
         ##########################
-        state_size = 234  
-        action_size = 5
 
         filepath = "policy/dql_agent.pth"
         if os.path.exists(filepath):
@@ -75,7 +71,9 @@ if __name__ == "__main__":
             
         print("Toutes les simulations sont terminées.")
 
-        reward_history = np.array(rewards_history)
+        plot_scores_list(rewards_history)
+
+        """     reward_history = np.array(rewards_history)
         num_cpu, num_episodes = reward_history.shape
         colors = plt.cm.rainbow(np.linspace(0, 1, num_cpu))
         plt.figure(figsize=(12, 6))
@@ -92,7 +90,7 @@ if __name__ == "__main__":
         plt.legend(loc="upper left", bbox_to_anchor=(1, 1), fontsize=8, ncol=2)
         plt.grid(True)
         plt.tight_layout()
-        plt.show()
+        plt.show()"""
 
                 
         ##########################
