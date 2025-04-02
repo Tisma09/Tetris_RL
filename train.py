@@ -84,9 +84,12 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
                         steps_since_replay += 1
             
             # Apprentissage sur la mémoire
-            if steps_since_replay >= replay_frequency :
+            if replay_frequency is int and steps_since_replay >= replay_frequency :
                 agent.replay(num_batches=num_batches)
                 steps_since_replay = 0
+        
+        if replay_frequency is str :
+            agent.replay(num_batches=num_batches)
         
         # Affichage de la progression
         current_episode = min(completed_episodes)

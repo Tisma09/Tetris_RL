@@ -63,7 +63,7 @@ if __name__ == "__main__":
                 env=env,
                 num_cpu=num_cpu,
                 episodes_per_process=num_episodes, 
-                replay_frequency=50,
+                replay_frequency="episode",
                 num_batches=1
             )
         finally:
