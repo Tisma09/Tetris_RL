@@ -11,27 +11,27 @@ class DQLAgent:
         self.state_size = state_size
         self.action_size = action_size
 
-        # Exploration rate
+        # Taux d'exploration
         self.epsilon = epsilon 
-        # Exploration min
+        # Exploration minimale
         self.epsilon_min = epsilon_min
-        # Exploration diminution
+        # Décroissance de l'exploration
         self.epsilon_decay = epsilon_decay
-        # Pondération récompenses futures
+        # Facteur d'actualisation des récompenses futures
         self.gamma = gamma 
 
         # Paramètres d'apprentissage
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         
-        # Replay buffer
+        # Mémoire tampon de rejeu
         self.memory = deque(maxlen=2000)
         self.remember_call = 0
         self.stop = False
         
-        # Politique
-        self.policy = self.build_policy()
-        # Ajustement poids
+        # Réseau de politique
+        self.policy = self._build_policy()
+        # Optimiseur pour l'ajustement des poids
         self.optimizer = optim.Adam(self.policy.parameters(), lr=self.learning_rate)
         # Fonction de perte (erreur quadratique moyenne)
         self.loss_fn = nn.MSELoss()
@@ -40,7 +40,10 @@ class DQLAgent:
         if loading :
             self.load_policy()
 
-    def build_policy(self):
+    def _build_policy(self):
+        """
+        Création du réseau de neurones
+        """
         policy = nn.Sequential(
             nn.Linear(self.state_size, 128),
             nn.ReLU(),
@@ -51,6 +54,9 @@ class DQLAgent:
         return policy
 
     def act(self, state):
+        """
+        Choisir une action
+        """
         # Exploration
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
@@ -58,22 +64,27 @@ class DQLAgent:
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         q_values = self.policy(state)
         return torch.argmax(q_values).item()  
+    
 
     def remember(self, state, action, reward, next_state, done):
+        """
+        Sauvegarder l'état en mémoire
+        """
         self.memory.append((state, action, reward, next_state, done))
         self.remember_call += 1
 
+
     def replay(self, num_batches=1):
         """
-        Perform multiple replay steps to better utilize accumulated data.
+        Effectuer plusieurs étapes de rejeu pour mieux utiliser les données accumulées.
 
-        num_batches: Number of batches to process in one replay step.
+        num_batches: Nombre de lots à traiter en une étape de rejeu.
         """
-        if len(self.memory) < self.batch_size :
-            print("Memory lower than batch size")
+        if len(self.memory) < self.batch_size:
+            print("Mémoire inférieure à la taille du lot")
             return
         if len(self.memory) < self.memory.maxlen:
-            print("Wait that memory is full...")
+            print("Attente que la mémoire soit pleine...")
             return
 
         for _ in range(num_batches):
@@ -100,22 +111,26 @@ class DQLAgent:
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-
-
     #########################################
     ####            Sauvegarde          #####
     #########################################
 
     def save_policy(self):
+        """
+        Sauvegarder dans un fichier pth
+        """
         checkpoint = {
-            'policy_state_dict': self.policy.state_dict(),          # Poids du modèle
-            'optimizer_state_dict': self.optimizer.state_dict(),    # État de l'optimiseur
-            'epsilon': self.epsilon                                 # Sauvegarde du taux d'exploration
+            'policy_state_dict': self.policy.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'epsilon': self.epsilon
         }
         torch.save(checkpoint, self.filename)
-        print(f"Politique sauvegardé sous '{self.filename}'")
+        print(f"Politique sauvegardée sous '{self.filename}'")
 
     def load_policy(self):
+        """
+        Charger un fichier pth
+        """
         try:
             checkpoint = torch.load(self.filename)
             self.policy.load_state_dict(checkpoint['policy_state_dict'])

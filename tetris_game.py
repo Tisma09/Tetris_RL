@@ -279,13 +279,13 @@ class TetrisGame:
     #############################
 
     def state_data(self):
-        shape_data_np = np.array(self.current_piece.shape_data)  # Convertit en numpy array
-        h, w = shape_data_np.shape # Récupère la taille actuelle
+        shape_data_np = np.array(self.current_piece.shape_data) 
+        h, w = shape_data_np.shape
         normalized_shape_data = np.zeros((4, 4), dtype=np.float32)
         normalized_shape_data[:h, :w] = shape_data_np
 
-        shape_data_np = np.array(self.next_piece.shape_data)  # Convertit en numpy array
-        h, w = shape_data_np.shape  # Récupère la taille actuelle
+        shape_data_np = np.array(self.next_piece.shape_data)
+        h, w = shape_data_np.shape
         normalized_next_shape_data = np.zeros((4, 4), dtype=np.float32)
         normalized_next_shape_data[:h, :w] = shape_data_np
 
