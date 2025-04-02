@@ -1,11 +1,12 @@
 from stable_baselines3.common.vec_env import SubprocVecEnv
 import os
+import numpy as np
 
 from tetris_game import TetrisGame
 from tetris_env import TetrisEnv
 from dql_agent import DQLAgent
-from train import train, train_multiprocess, play_ia
-from plot_scores import plot_scores_list
+from train import train_multiprocess, play_ia
+from plot_scores import create_dirs_logs, create_files_scores, extract_list
 
 
 def make_env(rank):
@@ -22,8 +23,12 @@ if __name__ == "__main__":
         #####     Agent    #######
         ##########################
 
-        filepath = "policy/dql_agent.pth"
-        if os.path.exists(filepath):
+        train_foldername, train_filename = 'policy', 'dql_agent.pth'
+
+        os.makedirs(train_foldername, exist_ok=True)
+        train_filepath = os.path.join(train_foldername, train_filename)
+        
+        if os.path.exists(train_filepath):
             print("Entrainement existant, chargement du fichier...")
             loading = True
         else:
@@ -36,7 +41,7 @@ if __name__ == "__main__":
         ##################################
         agent = DQLAgent(state_size = 234, 
                          action_size = 5, 
-                         filename=filepath, 
+                         filename=train_filepath, 
                          loading=loading, 
                          epsilon=1.0, 
                          epsilon_min=0.01, 
@@ -63,7 +68,7 @@ if __name__ == "__main__":
                 env=env,
                 num_cpu=num_cpu,
                 episodes_per_process=num_episodes, 
-                replay_frequency="episode",
+                replay_frequency=500,
                 num_batches=1
             )
         finally:
@@ -71,7 +76,14 @@ if __name__ == "__main__":
             
         print("Toutes les simulations sont terminées.")
 
-        plot_scores_list(rewards_history)
+        rewards_history = np.array(rewards_history)
+
+        logs_folderpath = create_dirs_logs(num_cpu, num_episodes)
+        create_files_scores(logs_folderpath, rewards_history)
+
+        print("Affichage des scores")
+        # Affichage des scores
+        extract_list(rewards_history)
 
     else:
         game = TetrisGame(ui=True)

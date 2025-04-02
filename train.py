@@ -1,5 +1,4 @@
 import pygame
-from dql_agent import DQLAgent
 from config import *
 import numpy as np
 
@@ -105,6 +104,10 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
                 recent_rewards = [episodes[-20:] for episodes in all_episodes_rewards]  # Prendre les 20 derniers épisodes de chaque CPU
                 avg_rewards = [np.mean(episodes) for episodes in recent_rewards]  # Moyenne par CPU
                 print(f"Score moyen sur les 20 derniers épisodes par environnement: {avg_rewards}")
+
+    print(f"Sauvegarde à l'épisode {current_episode}")
+    agent.save_policy()
+
     return all_episodes_rewards
 
 

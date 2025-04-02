@@ -214,7 +214,7 @@ class TetrisGame:
         for row in self.grid: # Parcours les lignes
             if all(x == 0 for x in row): # Si aucune case pleine
                 empty_lines += 1 # Alors incrément du nombre de lignes vides
-        self.reward += 10 * (empty_lines - self.empty_lines) # Valeur arbitraire
+        self.reward += 2 * (empty_lines - self.empty_lines) # Valeur arbitraire
         self.empty_lines = empty_lines # Save du nombre de ligne vides actuelles
 
     
@@ -228,7 +228,7 @@ class TetrisGame:
                             holes += 1 # Alors incrément nbr trous
                             break
 
-        self.reward -= 25 * (holes - self.holes) # Valeur arbitraire
+        self.reward -= 5 * (holes - self.holes) # Valeur arbitraire
         self.holes = holes
 
 
