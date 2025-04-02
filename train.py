@@ -2,14 +2,15 @@ import pygame
 from config import *
 import numpy as np
 
-def train(agent, game_env, num_episodes=1, freq=3, num_batches=1, ui=False):
+from tetris_game import TetrisGame
+
+def train(agent, game_env, num_episodes=1, num_batches=1, ui=False):
     """
     Entraine un agent DQL dans l'environnement Tetris.
 
     agent: L'agent à entraîner DQLAgent
     game_env: L'environnement de jeu Tetris
     num_episodes: Nombre d'épisodes d'entraînement
-    freq: frequence d'entrainement (tout les combien d'episodes)
     num_batches: Nombre de lot pare ntraînement
     ui: Avec ou sans interface
     """
@@ -20,18 +21,19 @@ def train(agent, game_env, num_episodes=1, freq=3, num_batches=1, ui=False):
 
         while not done:
             action = agent.act(state)
-            next_state, reward, done = game_env.step(action, ui=ui)
 
+            next_state, reward, done = game_env.step(action, ui=ui)
             agent.remember(state, action, reward, next_state, done)
 
             state = next_state
             total_reward += reward
 
         print(f"Episode {episode+1}/{num_episodes} - Score: {total_reward}")
-        if agent.remember_call > agent.memory.maxlen/freq:
-            print("Replay requested")
-            agent.replay(num_batches=num_batches)
-            agent.remember_call = 0
+        agent.replay(num_batches=num_batches)
+
+        if (episode+1) % 10 == 0:
+            print(f"Sauvegarde à l'épisode {episode+1}")
+            agent.save_policy()
 
 
 def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequency=100, num_batches=1):

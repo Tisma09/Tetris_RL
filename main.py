@@ -5,7 +5,7 @@ import numpy as np
 from tetris_game import TetrisGame
 from tetris_env import TetrisEnv
 from dql_agent import DQLAgent
-from train import train_multiprocess, play_ia
+from train import train, train_multiprocess, play_ia
 from plot_scores import create_dirs_logs, create_files_scores, extract_list
 
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
         #####     Agent    #######
         ##########################
 
-        train_foldername, train_filename = 'policy', 'dql_agent.pth'
+        train_foldername, train_filename = 'policy', 'dql_agent_40.pth'
 
         os.makedirs(train_foldername, exist_ok=True)
         train_filepath = os.path.join(train_foldername, train_filename)
@@ -39,16 +39,17 @@ if __name__ == "__main__":
         ##################################
         # Param à ajuster : 
         ##################################
-        agent = DQLAgent(state_size = 234, 
-                         action_size = 5, 
+        agent = DQLAgent(state_size = 216, 
+                         action_size = 40, 
                          filename=train_filepath, 
                          loading=loading, 
                          epsilon=1.0, 
                          epsilon_min=0.01, 
-                         epsilon_decay=0.995, 
+                         epsilon_decay=0.9995,
                          gamma=0.99, 
                          learning_rate=0.001, 
-                         batch_size=32)
+                         batch_size=32,
+                         max_memory=1000)
 
         
         ##########################
@@ -59,6 +60,11 @@ if __name__ == "__main__":
         env = SubprocVecEnv([make_env(i) for i in range(num_cpu)])
     
         # Lancer l'entraînement
+        """
+        game_env = TetrisGame(ui=True)
+        train(agent, game_env, num_episodes=num_episodes, num_batches=1, ui=True)
+        """
+        
         try :
             ##################################
             # Param à ajuster : 
@@ -68,7 +74,7 @@ if __name__ == "__main__":
                 env=env,
                 num_cpu=num_cpu,
                 episodes_per_process=num_episodes, 
-                replay_frequency=500,
+                replay_frequency="episode",
                 num_batches=1
             )
         finally:

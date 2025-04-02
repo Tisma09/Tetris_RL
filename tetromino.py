@@ -14,9 +14,10 @@ class Tetromino:
     def get_shape(self):
         return self.shape_data
         
-    def rotate(self, grid):
+    def rotate(self, grid, nb=1):
         old_shape = self.shape_data
-        self.shape_data = [list(row) for row in zip(*self.shape_data[::-1])]
+        for i in range(nb) :
+            self.shape_data = [list(row) for row in zip(*self.shape_data[::-1])]
         if self.collision(0, 0, grid):
             self.shape_data = old_shape
 

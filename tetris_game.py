@@ -49,13 +49,22 @@ class TetrisGame:
         if not self.current_piece.collision(dx, dy, self.grid):
             self.current_piece.x += dx
             self.current_piece.y += dy
-    
-    def hard_drop(self):
+        
+    def hard_drop(self, hard_drop_speed=500):
         while not self.current_piece.collision(0, 1, self.grid):
-            self.current_piece.y += 1
-        now = pygame.time.get_ticks()
+            self.clock.tick(FPS)
+            now = pygame.time.get_ticks()
+            if now - self.last_fall > hard_drop_speed:
+                self.current_piece.y += 1
+                self.last_fall = now
+                if hard_drop_speed > 0 :
+                    self.screen.fill((0,0,0))
+                    self.update(now)
+                    self.draw_grid()
+                    self.draw_piece(self.current_piece)
+                    self.draw_ui()
+                    pygame.display.update()
         self.lock_piece()
-        self.last_fall = now
 
     def rotate_piece(self):
         self.current_piece.rotate(self.grid)
@@ -168,7 +177,7 @@ class TetrisGame:
                     if event.key == pygame.K_UP:
                         self.rotate_piece()
                     if event.key == pygame.K_SPACE:
-                        self.hard_drop()
+                        self.hard_drop(hard_drop_speed=0)
             
             now = pygame.time.get_ticks()
             if now - self.last_fall > self.fall_speed:
@@ -214,7 +223,7 @@ class TetrisGame:
         for row in self.grid: # Parcours les lignes
             if all(x == 0 for x in row): # Si aucune case pleine
                 empty_lines += 1 # Alors incrément du nombre de lignes vides
-        self.reward += 2 * (empty_lines - self.empty_lines) # Valeur arbitraire
+        self.reward += 5 * (empty_lines - self.empty_lines) # Valeur arbitraire
         self.empty_lines = empty_lines # Save du nombre de ligne vides actuelles
 
     
@@ -228,7 +237,7 @@ class TetrisGame:
                             holes += 1 # Alors incrément nbr trous
                             break
 
-        self.reward -= 5 * (holes - self.holes) # Valeur arbitraire
+        self.reward -= 1 * (holes - self.holes) # Valeur arbitraire
         self.holes = holes
 
 
@@ -243,32 +252,28 @@ class TetrisGame:
     #           Fct Step        #
     #############################
 
-    def step(self, action, ui=False):
+    def step(self, action:tuple, ui:bool=False):
+        actions_convert = (action % 10, action//10)
+        x, rot = actions_convert
+        #print("Position :" + str(x) + ", Rotation :"+ str(rot))
         self.reward = 0
         self.clock.tick(FPS)
         if ui :
             self.screen.fill((0,0,0))
+        hard_drop_speed = 500 if ui else 0
 
-        if action == 0:
-            self.move(-1)
-        if action == 1:
-            self.move(1)
-        if action == 2:
-            self.move(0,1)
-        if action == 3:
+        x = x-5
+        if x > 0 :
+            for i in range(x) :
+                self.move(1)
+        if x < 0 :
+            for i in range(abs(x)) :
+                self.move(-1)
+        for i in range(rot) :
             self.rotate_piece()
-        #if action == 4:
-            #self.hard_drop()
+        self.hard_drop(hard_drop_speed=hard_drop_speed)
     
-        now = pygame.time.get_ticks()
-        if now - self.last_fall > self.fall_speed:
-            self.update(now)
-            self.update_reward()
-        if ui :
-            self.draw_grid()
-            self.draw_piece(self.current_piece)
-            self.draw_ui()
-            pygame.display.update()
+        self.update_reward()
 
         return self.state_data(), self.reward, not self.running
 
@@ -284,19 +289,19 @@ class TetrisGame:
         normalized_shape_data = np.zeros((4, 4), dtype=np.float32)
         normalized_shape_data[:h, :w] = shape_data_np
 
-        shape_data_np = np.array(self.next_piece.shape_data)
-        h, w = shape_data_np.shape
-        normalized_next_shape_data = np.zeros((4, 4), dtype=np.float32)
-        normalized_next_shape_data[:h, :w] = shape_data_np
+        #shape_data_np = np.array(self.next_piece.shape_data)
+        #h, w = shape_data_np.shape
+        #normalized_next_shape_data = np.zeros((4, 4), dtype=np.float32)
+        #normalized_next_shape_data[:h, :w] = shape_data_np
 
 
         grid_tensor = torch.tensor(self.grid, dtype=torch.float32).flatten()  # (200,)
         tetromino_tensor = torch.tensor(normalized_shape_data, dtype=torch.float32).flatten()  # (16,)
-        position_tensor = torch.tensor([self.current_piece.x, self.current_piece.y], dtype=torch.float32)  # (2,)
-        next_tetromino_tensor = torch.tensor(normalized_next_shape_data, dtype=torch.float32).flatten()  # (16,)
+        #position_tensor = torch.tensor([self.current_piece.x, self.current_piece.y], dtype=torch.float32)  # (2,)
+        #next_tetromino_tensor = torch.tensor(normalized_next_shape_data, dtype=torch.float32).flatten()  # (16,)
 
         # Concaténation de toutes les entrées
-        state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor, next_tetromino_tensor])
+        state_tensor = torch.cat([grid_tensor, tetromino_tensor])
 
         return state_tensor
     
