@@ -1,40 +1,73 @@
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from tetris_game import TetrisGame
-from train import train, play_ia
-from dql_agent import DQLAgent
 import os
+
+from tetris_game import TetrisGame
+from tetris_env import TetrisEnv
+from dql_agent import DQLAgent
+from train import train, train_multiprocess, play_ia
 from plot_scores import creation_repertoire_logs, creation_fichier_scores, plot_scores
+
+
+def make_env(rank):
+    def _init():
+        env = TetrisEnv()
+        return env
+    return _init
 
 if __name__ == "__main__": 
     req_train = input("Do you want to start the training? (y/n)")
     if req_train == "y":
-        num_simulations = int(input("How many simulations?"))
-        num_episodes = int(input("How many episodes per simulation?"))
-        num_batches = 1
-        freq = 3
-
-        folderpath = creation_repertoire_logs('logs', num_simulations, num_episodes)
+        
+        ##########################
+        #####     Agent    #######
+        ##########################
+        state_size = 234  
+        action_size = 5
 
         filepath = "policy/dql_agent.pth"
         if os.path.exists(filepath):
             print("Entrainement existant, chargement du fichier...")
-            agent = DQLAgent(234, 5, filename=filepath, loading=True)
+            agent = DQLAgent(state_size, action_size, filename=filepath, loading=True)
         else:
             print("Aucun entrainement existant, création d'un nouvel agent...")
-            agent = DQLAgent(234, 5, filename=filepath, loading=False)
+            agent = DQLAgent(state_size, action_size, filename=filepath, loading=False)
 
+        
         ##########################
         ##### Entraînement #######
-        
-        #sim_id = defini dans la boucle for # Numéro de la simulation
-        # Exécuter cette fonction avant de lancer l'entrainement de la simualtion
-        #creation_fichier_scores(folderpath, sim_id)
-            
         ##########################
-
+        num_cpu = int(input("How many simulations?")) # 10
+        num_episodes = int(input("How many episodes per process?")) # 10
+        env = SubprocVecEnv([make_env(i) for i in range(num_cpu)])
+        num_batches = 1
+        replay_frequency = 10
+    
+        # Lancer l'entraînement
+        try :
+            rewards_history = train_multiprocess(
+                agent=agent,
+                env=env,
+                num_cpu=num_cpu,
+                episodes_per_process=num_episodes, 
+                replay_frequency=replay_frequency,
+                num_batches=num_batches
+            )
+        finally:
+            env.close()
+            
         print("Toutes les simulations sont terminées.")
 
-        plot_scores(folderpath)
+        
+        # Optionnellement, tracez les récompenses pour voir la progression
+        import matplotlib.pyplot as plt
+        plt.plot(rewards_history)
+        plt.title("Évolution des récompenses")
+        plt.xlabel("Épisode")
+        plt.ylabel("Récompense totale")
+        plt.show()
+                
+        ##########################
+
     else:
         game = TetrisGame(ui=True)
         agent = DQLAgent(234, 5)

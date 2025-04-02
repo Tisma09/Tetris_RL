@@ -2,15 +2,16 @@ import pygame
 from dql_agent import DQLAgent
 from config import *
 
-def train(agent, game_env, num_episodes=1, ui=False, lock=None):
+def train(agent, game_env, num_episodes=1, freq=3, num_batches=1, ui=False):
     """
-    Entraîne un agent (DQL ou Gradient Learning) dans l'environnement Tetris.
+    Entraîne un agent DQL dans l'environnement Tetris.
 
-    agent: L'agent à entraîner (DQLAgent ou GradientLearningAgent)
+    agent: L'agent à entraîner DQLAgent
     game_env: L'environnement de jeu Tetris
     num_episodes: Nombre d'épisodes d'entraînement
+    freq: frequence d'entrainement (tout les combien d'episodes)
+    num_batches: Nombre de lot pare ntraînement
     ui: Avec ou sans interface
-    lock: Verrou pour synchroniser l'accès aux ressources partagées
     """
     for episode in range(num_episodes):
         state = game_env.reset()
@@ -21,32 +22,86 @@ def train(agent, game_env, num_episodes=1, ui=False, lock=None):
             action = agent.act(state)
             next_state, reward, done = game_env.step(action, ui=ui)
 
-            if isinstance(agent, DQLAgent):
-                agent.remember(state, action, reward, next_state, done)
-            else:
-                agent.train(state, action, reward, next_state, done)
+            agent.remember(state, action, reward, next_state, done)
 
             state = next_state
             total_reward += reward
 
         print(f"Episode {episode+1}/{num_episodes} - Score: {total_reward}")
-        
-def check_for_replay(agent, lock, num_batches, freq=3):
-    """
-    Vérifie si l'agent DQL a suffisamment de nouvelle expériences pour entraînement.
-    """
-    while agent.stop == False:
-        #print(f"Remember since last replay : {agent.remember_call}")
         if agent.remember_call > agent.memory.maxlen/freq:
-            if lock:
-                lock.acquire()
-            try:
-                print("Replay requested")
+            print("Replay requested")
+            agent.replay(num_batches=num_batches)
+            agent.remember_call = 0
+
+
+def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequency=100, num_batches=1):
+    """
+    Entraîne un agent DQL dans plusieurs environnement Tetris.
+
+    agent: L'agent à entraîner DQLAgent
+    env: L'environnement gym du jeu Tetris
+    episodes_per_process: Nombre d'épisodes d'entraînement par process
+    replay_frequency: frequence d'entrainement (tout les combien d'episodes)
+    num_batches: Nombre de lot pare ntraînement
+    """
+    steps_since_replay = 0
+    completed_episodes = [0] * num_cpu
+    all_episodes_rewards = [] 
+    
+    while min(completed_episodes) < episodes_per_process:
+        # Réinitialiser tous les environnements
+        states = env.reset()
+        episode_active = [True] * num_cpu
+        episode_rewards = [0] * num_cpu
+        
+        while any(episode_active):
+            # Préparer les actions pour tous les environnements
+            actions = [0] * num_cpu 
+            # Sélection action pour actif
+            for i in range(num_cpu):
+                if episode_active[i]:
+                    actions[i] = agent.act(states[i])
+            
+            # Exécuter une étape dans tous les environnements
+            next_states, rewards, dones, _ = env.step(actions)
+            
+            # Résultats pour chaque environnement
+            for i in range(num_cpu):
+                if episode_active[i]:
+                    episode_rewards[i] += rewards[i]
+                    if dones[i]:
+                        # Episode terminé pour cet environnement
+                        episode_active[i] = False
+                        completed_episodes[i] += 1
+                        all_episodes_rewards.append(episode_rewards[i])
+                        
+                        print(f"Env {i} - Episode {completed_episodes[i]}/{episodes_per_process} - Score: {episode_rewards[i]:.2f}")
+                    else:
+                        # Stocker l'expérience en mémoire
+                        agent.remember(states[i], actions[i], rewards[i], next_states[i], dones[i])
+                        states[i] = next_states[i]
+                        steps_since_replay += 1
+            
+            # Apprentissage sur la mémoire
+            if steps_since_replay >= replay_frequency and len(agent.memory) > agent.batch_size:
                 agent.replay(num_batches=num_batches)
-                agent.remember_call = 0
-            finally:
-                if lock:
-                    lock.release()
+                steps_since_replay = 0
+        
+        # Affichage de la progression
+        current_episode = min(completed_episodes)
+        print(f"Complétion générale: Episode {current_episode}/{episodes_per_process}")
+        
+        # Sauvegarde périodique du modèle
+        if current_episode % 10 == 0:
+            print(f"Sauvegarde à l'épisode {current_episode}")
+            agent.save_policy()
+            
+            # Afficher les performances moyennes sur les derniers épisodes
+            if len(all_episodes_rewards) >= num_cpu * 10:
+                recent_rewards = all_episodes_rewards[-num_cpu * 10:]
+                print(f"Score moyen sur les 10 derniers épisodes par environnement: {sum(recent_rewards) / len(recent_rewards):.2f}")
+    
+    return all_episodes_rewards
 
 
 def play_ia(agent, game_env):
