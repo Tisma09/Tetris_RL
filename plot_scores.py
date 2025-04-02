@@ -104,6 +104,8 @@ def plot_scores_csv(folderpath):
     plt.show()
 
 def plot_scores_list(matrix_reward):
+    matrix_reward = np.array(matrix_reward)
+
     # Obtenir le nombre de simulations et d'épisodes
     num_simulations, num_episodes = matrix_reward.shape
 
@@ -134,7 +136,8 @@ def plot_scores_list(matrix_reward):
     plt.title("Scores combinés de toutes les simulations avec courbe de tendance")
     plt.legend()
     plt.grid(True)  # Ajouter la grille
-    plt.show
+    plt.show()
+    print("plot_scores_list")
 
 def dernier_dossier_cree(parent_folder='logs'):
     """Trouver le dernier dossier créé dans le répertoire parent."""
