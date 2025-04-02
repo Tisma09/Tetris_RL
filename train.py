@@ -46,7 +46,7 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
     """
     steps_since_replay = 0
     completed_episodes = [0] * num_cpu
-    all_episodes_rewards = [] 
+    all_episodes_rewards = [] * num_cpu
     
     while min(completed_episodes) < episodes_per_process:
         # Réinitialiser tous les environnements
@@ -73,7 +73,7 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
                         # Episode terminé pour cet environnement
                         episode_active[i] = False
                         completed_episodes[i] += 1
-                        all_episodes_rewards.append(episode_rewards[i])
+                        all_episodes_rewards[i].append(episode_rewards[i])
                         
                         print(f"Env {i} - Episode {completed_episodes[i]}/{episodes_per_process} - Score: {episode_rewards[i]:.2f}")
                     else:
@@ -83,7 +83,7 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
                         steps_since_replay += 1
             
             # Apprentissage sur la mémoire
-            if steps_since_replay >= replay_frequency and len(agent.memory) > agent.batch_size:
+            if steps_since_replay >= replay_frequency :
                 agent.replay(num_batches=num_batches)
                 steps_since_replay = 0
         
@@ -97,10 +97,10 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
             agent.save_policy()
             
             # Afficher les performances moyennes sur les derniers épisodes
-            if len(all_episodes_rewards) >= num_cpu * 10:
-                recent_rewards = all_episodes_rewards[-num_cpu * 10:]
-                print(f"Score moyen sur les 10 derniers épisodes par environnement: {sum(recent_rewards) / len(recent_rewards):.2f}")
-    
+            if all(len(episodes) >= 20 for episodes in all_episodes_rewards):
+                recent_rewards = [episodes[-20:] for episodes in all_episodes_rewards]  # Prendre les 20 derniers épisodes de chaque CPU
+                avg_rewards = [sum(episodes) / len(episodes) for episodes in recent_rewards]  # Moyenne par CPU
+                print(f"Score moyen sur les 20 derniers épisodes par environnement: {avg_rewards}")
     return all_episodes_rewards
 
 

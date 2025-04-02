@@ -69,6 +69,9 @@ class DQLAgent:
 
         num_batches: Number of batches to process in one replay step.
         """
+        if len(self.memory) < self.batch_size :
+            print("Memory lower than batch size")
+            return
         if len(self.memory) < self.memory.maxlen:
             print("Wait that memory is full...")
             return

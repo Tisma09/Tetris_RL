@@ -1,5 +1,7 @@
 from stable_baselines3.common.vec_env import SubprocVecEnv
 import os
+import numpy as np
+import matplotlib as plt
 
 from tetris_game import TetrisGame
 from tetris_env import TetrisEnv
@@ -27,10 +29,25 @@ if __name__ == "__main__":
         filepath = "policy/dql_agent.pth"
         if os.path.exists(filepath):
             print("Entrainement existant, chargement du fichier...")
-            agent = DQLAgent(state_size, action_size, filename=filepath, loading=True)
+            loading = True
         else:
             print("Aucun entrainement existant, création d'un nouvel agent...")
-            agent = DQLAgent(state_size, action_size, filename=filepath, loading=False)
+            loading = False
+        
+
+        ##################################
+        # Param à ajuster : 
+        ##################################
+        agent = DQLAgent(state_size = 234, 
+                         action_size = 5, 
+                         filename=filepath, 
+                         loading=loading, 
+                         epsilon=1.0, 
+                         epsilon_min=0.01, 
+                         epsilon_decay=0.995, 
+                         gamma=0.99, 
+                         learning_rate=0.001, 
+                         batch_size=32)
 
         
         ##########################
@@ -39,32 +56,44 @@ if __name__ == "__main__":
         num_cpu = int(input("How many simulations?")) # 10
         num_episodes = int(input("How many episodes per process?")) # 10
         env = SubprocVecEnv([make_env(i) for i in range(num_cpu)])
-        num_batches = 1
-        replay_frequency = 10
     
         # Lancer l'entraînement
         try :
+            ##################################
+            # Param à ajuster : 
+            ##################################
             rewards_history = train_multiprocess(
                 agent=agent,
                 env=env,
                 num_cpu=num_cpu,
                 episodes_per_process=num_episodes, 
-                replay_frequency=replay_frequency,
-                num_batches=num_batches
+                replay_frequency=5,
+                num_batches=1
             )
         finally:
             env.close()
             
         print("Toutes les simulations sont terminées.")
 
-        
-        # Optionnellement, tracez les récompenses pour voir la progression
-        import matplotlib.pyplot as plt
-        plt.plot(rewards_history)
-        plt.title("Évolution des récompenses")
-        plt.xlabel("Épisode")
-        plt.ylabel("Récompense totale")
+        reward_history = np.array(rewards_history)
+        num_cpu, num_episodes = reward_history.shape
+        colors = plt.cm.rainbow(np.linspace(0, 1, num_cpu))
+        plt.figure(figsize=(12, 6))
+
+        # Tracer les récompenses pour chaque CPU
+        for i in range(num_cpu):
+            plt.plot(np.arange(1, num_episodes + 1), reward_history[i, :], 
+                    label=f'CPU {i}', color=colors[i], alpha=0.7)
+
+        # Labels et titre
+        plt.xlabel("Numéro d'épisode")
+        plt.ylabel("Récompense")
+        plt.title("Historique des récompenses par CPU")
+        plt.legend(loc="upper left", bbox_to_anchor=(1, 1), fontsize=8, ncol=2)
+        plt.grid(True)
+        plt.tight_layout()
         plt.show()
+
                 
         ##########################
 
