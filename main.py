@@ -46,7 +46,7 @@ if __name__ == "__main__":
                          loading=loading, 
                          epsilon=1.0, 
                          epsilon_min=0.01, 
-                         epsilon_decay=0.999, 
+                         epsilon_decay=0.998, 
                          gamma=0.99, 
                          learning_rate=0.001, 
                          batch_size=32)

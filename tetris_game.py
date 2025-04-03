@@ -36,6 +36,7 @@ class TetrisGame:
         self.reward = 0
         self.empty_lines = 20
         self.holes = 0
+        self.diff_hauteur = [0] * GRID_WIDTH
 
         return self.state_data()
     
@@ -203,6 +204,7 @@ class TetrisGame:
         self.remplir_lignes()
         self.maximiser_lignes_vides()
         self.minimiser_trous()
+        self.minimiser_difference_hauteur()
         #self.afficher_stats()
 
     def remplir_lignes(self):
@@ -217,7 +219,6 @@ class TetrisGame:
         self.reward += 2 * (empty_lines - self.empty_lines) # Valeur arbitraire
         self.empty_lines = empty_lines # Save du nombre de ligne vides actuelles
 
-    
     def minimiser_trous(self):
         holes = 0
         for i, row in enumerate(self.grid): # Parcours les lignes
@@ -231,6 +232,16 @@ class TetrisGame:
         self.reward -= 5 * (holes - self.holes) # Valeur arbitraire
         self.holes = holes
 
+    def minimiser_difference_hauteur(self):
+        diff_hauteur = [0] * GRID_WIDTH
+
+        for i, row in enumerate(self.grid): # Parcours les lignes
+            for j, valeur in enumerate(row): # Parcours les colonnes de la ligne i
+                if valeur != 0 and diff_hauteur[j] != 0: # Si case pleine
+                    diff_hauteur[j] = GRID_HEIGHT - i # Enregistre la hauteur de la case pleine dans la colonne j
+
+        self.reward -= 3 * (sum(diff_hauteur) - sum(self.diff_hauteur)) # Valeur arbitraire
+        self.diff_hauteur = diff_hauteur
 
     def afficher_stats(self):
         print("Lignes vides : ", self.empty_lines)
