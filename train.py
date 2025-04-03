@@ -4,7 +4,7 @@ import numpy as np
 
 def train(agent, game_env, num_episodes=1, freq=3, num_batches=1, ui=False):
     """
-    Entraîne un agent DQL dans l'environnement Tetris.
+    Entraine un agent DQL dans l'environnement Tetris.
 
     agent: L'agent à entraîner DQLAgent
     game_env: L'environnement de jeu Tetris
@@ -36,7 +36,7 @@ def train(agent, game_env, num_episodes=1, freq=3, num_batches=1, ui=False):
 
 def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequency=100, num_batches=1):
     """
-    Entraîne un agent DQL dans plusieurs environnement Tetris.
+    Entraine un agent DQL dans plusieurs environnement Tetris.
 
     agent: L'agent à entraîner DQLAgent
     env: L'environnement gym du jeu Tetris

@@ -17,7 +17,7 @@ def make_env(rank):
     return _init
 
 if __name__ == "__main__": 
-    req_train = input("Do you want to start the training? (y/n)")
+    req_train = input("Voulez vous recommencer l'entrainement ? (y/n)")
     if req_train == "y":
         
         ##########################
@@ -55,8 +55,8 @@ if __name__ == "__main__":
         ##########################
         ##### Entraînement #######
         ##########################
-        num_cpu = int(input("How many simulations?")) # 10
-        num_episodes = int(input("How many episodes per process?")) # 10
+        num_cpu = int(input("Combien de simulations ?")) 
+        num_episodes = int(input("Combien d'episode par simulation ?")) 
         env = SubprocVecEnv([make_env(i) for i in range(num_cpu)])
     
         start_time = time.time()
@@ -99,4 +99,4 @@ if __name__ == "__main__":
         game = TetrisGame(ui=True)
         agent = DQLAgent(234, 5)
         play_ia(agent, game)
-        print("End of the game")
+        print("Fin du jeu")
