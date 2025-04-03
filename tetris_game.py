@@ -36,7 +36,7 @@ class TetrisGame:
         self.reward = 0
         self.empty_lines = 20
         self.holes = 0
-        self.diff_hauteur = [0] * GRID_WIDTH
+        self.diff_hauteur = 0
 
         return self.state_data()
     
@@ -233,14 +233,17 @@ class TetrisGame:
         self.holes = holes
 
     def minimiser_difference_hauteur(self):
-        diff_hauteur = [0] * GRID_WIDTH
+        list_diff_hauteur = [0] * GRID_WIDTH
+        diff_hauteur = 0
 
         for i, row in enumerate(self.grid): # Parcours les lignes
             for j, valeur in enumerate(row): # Parcours les colonnes de la ligne i
-                if valeur != 0 and diff_hauteur[j] != 0: # Si case pleine
-                    diff_hauteur[j] = GRID_HEIGHT - i # Enregistre la hauteur de la case pleine dans la colonne j
+                if valeur != 0 and list_diff_hauteur[j] != 0: # Si case pleine
+                    list_diff_hauteur[j] = GRID_HEIGHT - i # Enregistre la hauteur de la case pleine dans la colonne j
+        
+        diff_hauteur = max(list_diff_hauteur) - min(list_diff_hauteur) # Différence entre la plus haute et la plus basse case pleine
 
-        self.reward -= 3 * (sum(diff_hauteur) - sum(self.diff_hauteur)) # Valeur arbitraire
+        self.reward -= 3 * (diff_hauteur - self.diff_hauteur) # Valeur arbitraire
         self.diff_hauteur = diff_hauteur
 
     def afficher_stats(self):

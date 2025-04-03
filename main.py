@@ -17,41 +17,40 @@ def make_env(rank):
     return _init
 
 if __name__ == "__main__": 
+        
+    ##########################
+    #####     Agent    #######
+    ##########################
+
+    train_foldername, train_filename = 'policy', 'dql_agent_final.pth'
+
+    os.makedirs(train_foldername, exist_ok=True)
+    train_filepath = os.path.join(train_foldername, train_filename)
+    
+    if os.path.exists(train_filepath):
+        print("Entrainement existant, chargement du fichier...")
+        loading = True
+    else:
+        print("Aucun entrainement existant, création d'un nouvel agent...")
+        loading = False
+
+    ##################################
+    # Param à ajuster : 
+    ##################################
+    agent = DQLAgent(state_size = 218, 
+                        action_size = 5, 
+                        filename=train_filepath, 
+                        loading=loading, 
+                        epsilon=1.000000, 
+                        epsilon_min=0.01, 
+                        epsilon_decay=0.99999, 
+                        gamma=0.99, 
+                        learning_rate=0.001, 
+                        batch_size=64,
+                        max_memory_size=5000)
+        
     req_train = input("Voulez vous recommencer l'entrainement ? (y/n)")
-    if req_train == "y":
-        
-        ##########################
-        #####     Agent    #######
-        ##########################
-
-        train_foldername, train_filename = 'policy', 'dql_agent_new.pth'
-
-        os.makedirs(train_foldername, exist_ok=True)
-        train_filepath = os.path.join(train_foldername, train_filename)
-        
-        if os.path.exists(train_filepath):
-            print("Entrainement existant, chargement du fichier...")
-            loading = True
-        else:
-            print("Aucun entrainement existant, création d'un nouvel agent...")
-            loading = False
-        
-
-        ##################################
-        # Param à ajuster : 
-        ##################################
-        agent = DQLAgent(state_size = 218, 
-                         action_size = 5, 
-                         filename=train_filepath, 
-                         loading=loading, 
-                         epsilon=1.0, 
-                         epsilon_min=0.01, 
-                         epsilon_decay=0.998, 
-                         gamma=0.99, 
-                         learning_rate=0.001, 
-                         batch_size=32)
-
-        
+    if req_train == "y": 
         ##########################
         ##### Entraînement #######
         ##########################
@@ -71,7 +70,7 @@ if __name__ == "__main__":
                 env=env,
                 num_cpu=num_cpu,
                 episodes_per_process=num_episodes, 
-                replay_frequency=500,
+                replay_frequency=200,
                 num_batches=1
             )
         finally:
@@ -97,6 +96,6 @@ if __name__ == "__main__":
 
     else:
         game = TetrisGame(ui=True)
-        agent = DQLAgent(234, 5)
+        agent.epsilon = 0  # L'agent n'explore pas
         play_ia(agent, game)
         print("Fin du jeu")

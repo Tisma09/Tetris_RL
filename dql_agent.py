@@ -6,7 +6,9 @@ import numpy as np
 from collections import deque
 
 class DQLAgent:
-    def __init__(self, state_size, action_size, filename=None, loading=False, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, gamma=0.99, learning_rate=0.001, batch_size=32):
+    def __init__(self, state_size, action_size, filename=None, loading=False,
+                 epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995, gamma=0.99,
+                 learning_rate=0.001, batch_size=32, max_memory_size=2000):
         # Taille état et nombre d'actions possibles
         self.state_size = state_size
         self.action_size = action_size
@@ -25,7 +27,7 @@ class DQLAgent:
         self.batch_size = batch_size
         
         # Mémoire tampon de rejeu
-        self.memory = deque(maxlen=2000)
+        self.memory = deque(maxlen=max_memory_size)
         self.remember_call = 0
         self.stop = False
         
@@ -58,7 +60,7 @@ class DQLAgent:
         Choisir une action
         """
         # Exploration
-        if np.random.rand() <= self.epsilon:
+        if np.random.rand() < self.epsilon:
             return random.randrange(self.action_size)
         # Exploitation
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)

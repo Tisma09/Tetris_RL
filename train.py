@@ -83,17 +83,18 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
                         steps_since_replay += 1
             
             # Apprentissage sur la mémoire
-            if replay_frequency is int and steps_since_replay >= replay_frequency :
+            if type(replay_frequency) is int and steps_since_replay >= replay_frequency :
                 agent.replay(num_batches=num_batches)
                 steps_since_replay = 0
         
-        if replay_frequency is str :
+
+        if type(replay_frequency) is str :
             agent.replay(num_batches=num_batches)
         
         # Affichage de la progression
         current_episode = min(completed_episodes)
         print(f"Complétion générale: Episode {current_episode}/{episodes_per_process}")
-        print(f"Epsilon : {agent.epsilon}")
+        print(f"Epsilon : {agent.epsilon:.6f}")
         
         # Sauvegarde périodique du modèle
         save_frequency = 10  # Fréquence de sauvegarde
@@ -106,7 +107,7 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
             if all(len(episodes) >= print_frequency for episodes in all_episodes_rewards):
                 recent_rewards = [episodes[-print_frequency:] for episodes in all_episodes_rewards]  # Prendre les x derniers épisodes de chaque CPU
                 avg_rewards = [np.mean(episodes) for episodes in recent_rewards]  # Moyenne par CPU
-                print(f"Score moyen sur les 20 derniers épisodes par environnement: {float(np.mean(avg_rewards))}")
+                print(f"Score moyen sur les 20 derniers épisodes par environnement: {float(np.mean(avg_rewards)):.2f}")
 
     print(f"Sauvegarde finale à l'épisode {current_episode}")
     agent.save_policy()

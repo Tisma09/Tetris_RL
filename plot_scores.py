@@ -21,7 +21,7 @@ def create_dirs_logs(policy_name, parent_folder='logs'):
     # Créer le dossier
     os.makedirs(folderpath, exist_ok=True)
 
-    print(f"Dossier créé : {folderpath}")
+    #print(f"Dossier créé : {folderpath}")
 
     return folderpath
 
@@ -46,7 +46,7 @@ def create_files_scores(folderpath, matrix_reward):
                 # Convertir en entier et flottant pour assurer un formatage compatible avec `read_scores_from_file`
                 writer.writerow([int(episode + 1), float(matrix_reward[sim, episode])])
 
-    print(f"{num_simulations} créés fichiers CSV avec succès dans {folderpath} !")
+    #print(f"{num_simulations} créés fichiers CSV avec succès dans {folderpath} !")
 
 # Fonction pour lire les scores depuis un fichier CSV
 def read_scores_from_file(filename):
