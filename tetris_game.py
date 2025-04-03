@@ -38,6 +38,9 @@ class TetrisGame:
         self.holes = 0
         self.diff_hauteur = 0
 
+        self.ok_counter = False
+        self.counter = 2
+
         return self.state_data()
     
 
@@ -87,6 +90,8 @@ class TetrisGame:
         self.current_piece.y = 0
         if self.current_piece.collision(0, 0, self.grid):
             self.running = False
+
+        self.ok_counter = True
     
     def clear_lines(self):
         self.full_lines = []
@@ -198,14 +203,21 @@ class TetrisGame:
     #        Fct Reward         #
     #############################
 
-    def update_reward(self):
+    def update_reward(self, ui):
         self.reward += self.score * 0.1
 
         self.remplir_lignes()
         self.maximiser_lignes_vides()
         self.minimiser_trous()
         self.minimiser_difference_hauteur()
-        #self.afficher_stats()
+
+        if self.ok_counter:
+            self.reward += self.counter
+            self.counter *= 1.05
+            self.ok_counter = False
+
+        if ui:
+            self.afficher_stats()
 
     def remplir_lignes(self):
         if self.full_lines:
@@ -238,7 +250,7 @@ class TetrisGame:
 
         for i, row in enumerate(self.grid): # Parcours les lignes
             for j, valeur in enumerate(row): # Parcours les colonnes de la ligne i
-                if valeur != 0 and list_diff_hauteur[j] != 0: # Si case pleine
+                if valeur != 0 and list_diff_hauteur[j] == 0: # Si case pleine
                     list_diff_hauteur[j] = GRID_HEIGHT - i # Enregistre la hauteur de la case pleine dans la colonne j
         
         diff_hauteur = max(list_diff_hauteur) - min(list_diff_hauteur) # Différence entre la plus haute et la plus basse case pleine
@@ -249,7 +261,8 @@ class TetrisGame:
     def afficher_stats(self):
         print("Lignes vides : ", self.empty_lines)
         print("Trous : ", self.holes)
-        print("Récompenses : ", self.reward)
+        print("Différence de hauteur : ", self.diff_hauteur)
+        print("Récompenses : {:.2f}".format(self.reward))
 
         print("-"*20)
         
@@ -277,7 +290,7 @@ class TetrisGame:
         now = pygame.time.get_ticks()
         if now - self.last_fall > self.fall_speed:
             self.update(now)
-            self.update_reward()
+            self.update_reward(ui)
         if ui :
             self.draw_grid()
             self.draw_piece(self.current_piece)
@@ -293,23 +306,36 @@ class TetrisGame:
     #############################
 
     def state_data(self):
-        shape_data_np = np.array(self.current_piece.shape_data) 
-        h, w = shape_data_np.shape
-        normalized_shape_data = np.zeros((4, 4), dtype=np.float32)
-        normalized_shape_data[:h, :w] = shape_data_np
 
-        shape_data_np = np.array(self.next_piece.shape_data)
-        h, w = shape_data_np.shape
-        normalized_next_shape_data = np.zeros((4, 4), dtype=np.float32)
-        normalized_next_shape_data[:h, :w] = shape_data_np
+        test = False
+
+        if not test:
+            shape_data_np = np.array(self.current_piece.shape_data) 
+            h, w = shape_data_np.shape
+            normalized_shape_data = np.zeros((4, 4), dtype=np.float32)
+            normalized_shape_data[:h, :w] = shape_data_np
+
+            shape_data_np = np.array(self.next_piece.shape_data)
+            h, w = shape_data_np.shape
+            normalized_next_shape_data = np.zeros((4, 4), dtype=np.float32)
+            normalized_next_shape_data[:h, :w] = shape_data_np
 
 
-        grid_tensor = torch.tensor(self.grid, dtype=torch.float32).flatten()  # (200,)
-        tetromino_tensor = torch.tensor(normalized_shape_data, dtype=torch.float32).flatten()  # (16,)
-        position_tensor = torch.tensor([self.current_piece.x, self.current_piece.y], dtype=torch.float32)  # (2,)
-        next_tetromino_tensor = torch.tensor(normalized_next_shape_data, dtype=torch.float32).flatten()  # (16,)
+            grid_tensor = torch.tensor(self.grid, dtype=torch.float32).flatten()  # (200,)
+            tetromino_tensor = torch.tensor(normalized_shape_data, dtype=torch.float32).flatten()  # (16,)
+            position_tensor = torch.tensor([self.current_piece.x, self.current_piece.y], dtype=torch.float32)  # (2,)
+            next_tetromino_tensor = torch.tensor(normalized_next_shape_data, dtype=torch.float32).flatten()  # (16,)
 
-        # Concaténation de toutes les entrées
-        state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor])
+            # Concaténation de toutes les entrées
+            state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor])
+
+        else:
+            tetromino_tensor = torch.tensor(self.current_piece.id, dtype=torch.float32).flatten()  # (1,)
+            position_tensor = torch.tensor([self.current_piece.x, self.current_piece.y], dtype=torch.float32)  # (2,)
+            holes_tensor = torch.tensor(self.holes, dtype=torch.float32) # (1,)
+            diff_hauteur_tensor = torch.tensor(self.diff_hauteur, dtype=torch.float32) # (1,)
+
+            # Concaténation de toutes les entrées
+            state_tensor = torch.cat([position_tensor, tetromino_tensor, holes_tensor, diff_hauteur_tensor])
 
         return state_tensor

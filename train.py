@@ -107,7 +107,7 @@ def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequen
             if all(len(episodes) >= print_frequency for episodes in all_episodes_rewards):
                 recent_rewards = [episodes[-print_frequency:] for episodes in all_episodes_rewards]  # Prendre les x derniers épisodes de chaque CPU
                 avg_rewards = [np.mean(episodes) for episodes in recent_rewards]  # Moyenne par CPU
-                print(f"Score moyen sur les 20 derniers épisodes par environnement: {float(np.mean(avg_rewards)):.2f}")
+                print(f"Score moyen sur les 20 derniers épisodes : {float(np.mean(avg_rewards)):.2f}")
 
     print(f"Sauvegarde finale à l'épisode {current_episode}")
     agent.save_policy()

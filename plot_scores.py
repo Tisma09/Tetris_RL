@@ -94,7 +94,7 @@ def extract_csv(folderpath):
         all_scores.extend(scores)  # Ajouter tous les scores
 
     all_episodes += 1
-    plot_scores(all_episodes, all_scores)
+    plot_scores(all_episodes, all_scores, num_simulations)
 
 def extract_list(matrix_reward):
     """Extraire les informations de la liste de liste"""
@@ -109,14 +109,14 @@ def extract_list(matrix_reward):
     # Applatir la matrice de scores pour obtenir tous les scores
     all_scores = matrix_reward.flatten()
 
-    plot_scores(all_episodes, all_scores)
+    plot_scores(all_episodes, all_scores, num_simulations)
 
-def plot_scores(all_episodes, all_scores):
+def plot_scores(all_episodes, all_scores, num_simulations):
     """Tracer les scores de chaque épisodes de toutes les simulations"""
     # Tracer les croix (points) pour tous les épisodes combinés
     plt.scatter(all_episodes, all_scores, marker='x', s=50, alpha=0.7, label="Scores combinés")
 
-    if len(all_episodes) > 1:
+    if len(all_episodes)/num_simulations > 1:
         # Ajouter une courbe de tendance globale (régression linéaire)
         episodes_array = np.array(all_episodes)
         scores_array = np.array(all_scores)

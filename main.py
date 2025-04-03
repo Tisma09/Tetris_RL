@@ -22,7 +22,7 @@ if __name__ == "__main__":
     #####     Agent    #######
     ##########################
 
-    train_foldername, train_filename = 'policy', 'dql_agent_final.pth'
+    train_foldername, train_filename = 'policy', 'dql_agent_test.pth'
 
     os.makedirs(train_foldername, exist_ok=True)
     train_filepath = os.path.join(train_foldername, train_filename)
@@ -37,11 +37,11 @@ if __name__ == "__main__":
     ##################################
     # Param à ajuster : 
     ##################################
-    agent = DQLAgent(state_size = 218, 
-                        action_size = 5, 
+    agent = DQLAgent(state_size = 218, #218
+                        action_size = 4, 
                         filename=train_filepath, 
                         loading=loading, 
-                        epsilon=1.000000, 
+                        epsilon=0.99999, 
                         epsilon_min=0.01, 
                         epsilon_decay=0.99999, 
                         gamma=0.99, 
@@ -90,7 +90,6 @@ if __name__ == "__main__":
         logs_folderpath = create_dirs_logs(train_filename)
         create_files_scores(logs_folderpath, rewards_history)
 
-        print("Affichage des scores")
         # Affichage des scores
         extract_list(rewards_history)
 

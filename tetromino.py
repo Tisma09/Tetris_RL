@@ -5,6 +5,7 @@ from config import *
 
 class Tetromino:
     def __init__(self, x, y):
+        #self.id = random.randint(1, 7)
         self.shape_data = random.choice(SHAPES)
         self.color = SHAPES.index(self.shape_data) + 1
         self.x = x
