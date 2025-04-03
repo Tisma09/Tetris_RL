@@ -4,7 +4,7 @@ import csv
 import os
 from datetime import datetime
 
-def create_dirs_logs(num_simulations, num_episodes, parent_folder='logs'):
+def create_dirs_logs(policy_name, parent_folder='logs'):
     """Créer un dossier pour enregistrer les fichiers de logs, avec un nom basé sur la date et l'heure actuelles et les paramètres passés"""
     # Obtenir la date et l'heure actuelles
     current_time = datetime.now()
@@ -12,8 +12,8 @@ def create_dirs_logs(num_simulations, num_episodes, parent_folder='logs'):
     # Formater la date et l'heure au format JJ_MM_AAAA__HH_MM
     formatted_time = current_time.strftime("%d_%m_%Y__%H_%M")
     
-    # Ajouter les variables num_simulations et num_episodes à la fin du nom du dossier
-    folder_name = f"{formatted_time}_sim_{num_simulations}_ep_{num_episodes}"
+    # Ajouter le nom de la politique d'entrainement
+    folder_name = f"{formatted_time}_policy_{policy_name}"
     
     # Spécifier le chemin du dossier à créer à l'intérieur du répertoire parent
     folderpath = os.path.join(parent_folder, folder_name)
@@ -129,6 +129,8 @@ def plot_scores(all_episodes, all_scores):
         trendline = polynomial(episodes_array)
         plt.plot(episodes_array, trendline, color='red', label="Courbe de tendance", linestyle='--')
 
+    stats(all_scores)
+
     # Ajouter des détails au graphique
     plt.xlabel("Numéro d'épisode")
     plt.ylabel("Score")
@@ -136,8 +138,6 @@ def plot_scores(all_episodes, all_scores):
     plt.legend()
     plt.grid(True)  # Ajouter la grille
     plt.show()
-
-    stats(all_scores)
 
 def stats(all_scores):
     """Calculer les statistiques de base sur les scores"""
@@ -153,7 +153,6 @@ def stats(all_scores):
     
     print("Score minimum:", min_score)
     print("Score maximum:", max_score)
-
 
     # Calculer la moyenne, la médiane et l'écart type
     mean_score = np.mean(all_scores)

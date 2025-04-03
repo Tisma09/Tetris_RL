@@ -1,6 +1,7 @@
 from stable_baselines3.common.vec_env import SubprocVecEnv
 import os
 import numpy as np
+import time
 
 from tetris_game import TetrisGame
 from tetris_env import TetrisEnv
@@ -23,7 +24,7 @@ if __name__ == "__main__":
         #####     Agent    #######
         ##########################
 
-        train_foldername, train_filename = 'policy', 'dql_agent.pth'
+        train_foldername, train_filename = 'policy', 'dql_agent_new.pth'
 
         os.makedirs(train_foldername, exist_ok=True)
         train_filepath = os.path.join(train_foldername, train_filename)
@@ -39,13 +40,13 @@ if __name__ == "__main__":
         ##################################
         # Param à ajuster : 
         ##################################
-        agent = DQLAgent(state_size = 234, 
+        agent = DQLAgent(state_size = 218, 
                          action_size = 5, 
                          filename=train_filepath, 
                          loading=loading, 
                          epsilon=1.0, 
                          epsilon_min=0.01, 
-                         epsilon_decay=0.995, 
+                         epsilon_decay=0.999, 
                          gamma=0.99, 
                          learning_rate=0.001, 
                          batch_size=32)
@@ -58,6 +59,8 @@ if __name__ == "__main__":
         num_episodes = int(input("How many episodes per process?")) # 10
         env = SubprocVecEnv([make_env(i) for i in range(num_cpu)])
     
+        start_time = time.time()
+
         # Lancer l'entraînement
         try :
             ##################################
@@ -76,9 +79,16 @@ if __name__ == "__main__":
             
         print("Toutes les simulations sont terminées.")
 
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        moy_ep = elapsed_time/num_episodes
+
+        print(f"Temps de l'entrainement : {elapsed_time/60:.2f} minutes")
+        print(f"Temps moyen par épisode : {moy_ep:.2f} secondes")
+
         rewards_history = np.array(rewards_history)
 
-        logs_folderpath = create_dirs_logs(num_cpu, num_episodes)
+        logs_folderpath = create_dirs_logs(train_filename)
         create_files_scores(logs_folderpath, rewards_history)
 
         print("Affichage des scores")

@@ -296,11 +296,6 @@ class TetrisGame:
         next_tetromino_tensor = torch.tensor(normalized_next_shape_data, dtype=torch.float32).flatten()  # (16,)
 
         # Concaténation de toutes les entrées
-        state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor, next_tetromino_tensor])
+        state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor])
 
         return state_tensor
-    
-
-
-
-
