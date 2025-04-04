@@ -51,8 +51,6 @@ def create_files_scores(folderpath, matrix_reward):
 # Fonction pour lire les scores depuis un fichier CSV
 def read_scores_from_file(filename):
     """Lire les scores depuis un fichier CSV. Chaque ligne contient un numéro d'épisode et son score."""
-    """Utiliser uniquement pour l'exécution de ce fichier isolé."""
-    
     episodes = []
     scores = []
     
@@ -74,7 +72,6 @@ def read_scores_from_file(filename):
 
 def extract_csv(folderpath):
     """Extraire les informations des fichiers CSV"""
-    """Utiliser uniquement pour l'éxécution de ce fichier isolé."""
     all_episodes = []
     all_scores = []
 
@@ -98,7 +95,6 @@ def extract_csv(folderpath):
 
 def extract_list(matrix_reward):
     """Extraire les informations de la liste de liste"""
-    """Utiliser uniquement pour l'éxécution de ce fichier isolé."""
 
     # Obtenir le nombre de simulations et d'épisodes
     num_simulations, num_episodes = matrix_reward.shape
@@ -141,7 +137,6 @@ def plot_scores(all_episodes, all_scores, num_simulations):
 
 def stats(all_scores):
     """Calculer les statistiques de base sur les scores"""
-    """Utiliser uniquement pour l'éxécution de ce fichier isolé."""
 
     # Obtenir le nombre de score supérieurs à 0
     num_positive_scores = (all_scores > 0).sum()

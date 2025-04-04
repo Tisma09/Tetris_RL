@@ -28,10 +28,7 @@ def train(agent, game_env, num_episodes=1, freq=3, num_batches=1, ui=False):
             total_reward += reward
 
         print(f"Episode {episode+1}/{num_episodes} - Score: {total_reward}")
-        if agent.remember_call > agent.memory.maxlen/freq:
-            print("Replay requested")
-            agent.replay(num_batches=num_batches)
-            agent.remember_call = 0
+        agent.replay(num_batches=num_batches)
 
 
 def train_multiprocess(agent, env, num_cpu, episodes_per_process, replay_frequency=100, num_batches=1):

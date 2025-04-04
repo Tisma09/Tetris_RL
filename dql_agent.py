@@ -47,11 +47,11 @@ class DQLAgent:
         Création du réseau de neurones
         """
         policy = nn.Sequential(
-            nn.Linear(self.state_size, 128), # 128
+            nn.Linear(self.state_size, 128), 
             nn.ReLU(),
-            nn.Linear(128, 64), # 128, 64
+            nn.Linear(128, 64),
             nn.ReLU(),
-            nn.Linear(64, self.action_size) # 64
+            nn.Linear(64, self.action_size)
         )
         return policy
 

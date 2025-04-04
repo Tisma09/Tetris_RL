@@ -329,13 +329,4 @@ class TetrisGame:
             # Concaténation de toutes les entrées
             state_tensor = torch.cat([grid_tensor, tetromino_tensor, position_tensor])
 
-        else:
-            tetromino_tensor = torch.tensor(self.current_piece.id, dtype=torch.float32).flatten()  # (1,)
-            position_tensor = torch.tensor([self.current_piece.x, self.current_piece.y], dtype=torch.float32)  # (2,)
-            holes_tensor = torch.tensor(self.holes, dtype=torch.float32) # (1,)
-            diff_hauteur_tensor = torch.tensor(self.diff_hauteur, dtype=torch.float32) # (1,)
-
-            # Concaténation de toutes les entrées
-            state_tensor = torch.cat([position_tensor, tetromino_tensor, holes_tensor, diff_hauteur_tensor])
-
         return state_tensor

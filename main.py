@@ -37,7 +37,7 @@ if __name__ == "__main__":
     ##################################
     # Param à ajuster : 
     ##################################
-    agent = DQLAgent(state_size = 218, #218
+    agent = DQLAgent(state_size = 218,
                         action_size = 4, 
                         filename=train_filepath, 
                         loading=loading, 
